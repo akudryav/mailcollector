@@ -23,7 +23,7 @@ use app\models\Message;
 
 class MailController extends Controller
 {
-    public $lock = "reader.lock"; // Yii::getAlias('@runtime');
+    public $lock = "reader.lock";
     
     /**
      * Проверка блокировки файла
@@ -35,11 +35,12 @@ class MailController extends Controller
      */
     private function checkLock()
     {
-        $aborted = file_exists($this->lock) ? filemtime($this->lock) : false;
+        $lock_path = Yii::getAlias('@runtime').'/'.$this->lock;
+        $aborted = file_exists($lock_path) ? filemtime($lock_path) : false;
         if($aborted){ //если выполнение предыдущего скрипта было прервано
             Yii::info('Выполнение предыдущего скрипта было прервано'); //пишем в лог, что прервано
         }
-        $fp = fopen($this->lock,'w'); //открывает файл с возможностью записи
+        $fp = fopen($lock_path,'w'); //открывает файл с возможностью записи
         if(!flock($fp,LOCK_EX|LOCK_NB)){ //если не удалось наложить блокировку, то значит предыдущий скрипт еще работает.
             Yii::info("Предыдущий скрипт еще работает"); //пишем в лог, что занято
             return false;
@@ -53,7 +54,7 @@ class MailController extends Controller
     public function actionRead()
     {
         $fp = $this->checkLock();
-        if(!fp) return ExitCode::CANTCREAT;
+        if(!$fp) return ExitCode::CANTCREAT;
         
         //отключаем Autocommit, будем сами управлять транзакциями
         $transaction = Mailbox::getDb()->beginTransaction();
@@ -66,10 +67,10 @@ class MailController extends Controller
 
                 //строка подключения
                 $conn = "{{$account->host}:{$account->port}{$ssl}}";
-                Yii::info("Read {$account->user}, conn = $conn");
+                Yii::info("Read {$account->email}, conn = $conn");
 
                 //открываем IMAP-поток
-                $mail = imap_open($conn, $account->user, $account->password);
+                $mail = imap_open($conn, $account->email, $account->password);
                 if(!$mail){		
                     //пишем влог сообщение о неудачной попытке подключения
                     Yii::error("Error opening IMAP. " . imap_last_error());
@@ -94,7 +95,7 @@ class MailController extends Controller
 		В нашем случае для удобста будем брать диапазон от последнего UID + 1
 		и до 2147483647.
                  */
-                $uid_from = $account->last_uid + 1;
+                $uid_from = $account->last_message_uid + 1;
                 $uid_to = 2147483647;		
                 $range = "$uid_from:$uid_to";		
                 $arr = imap_fetch_overview($mail, $range, FT_UID);		
@@ -107,13 +108,33 @@ class MailController extends Controller
 
                     //создаем запись в таблице messages,
                     //тем самым поставив сообщение в очередь на загрузку
-                    $sql = "INSERT INTO messages(mailbox_id,uid,create_date,is_ready)
-                            VALUES($mailbox_id,$message_uid,now(),0)";
-                    mysql_query($sql) or die(mysql_error());
+                    $model = new Message();
+                    $model->load([
+                        'mailbox_id' => $account->id,
+                        'uid' => $message_uid,
+                        'create_date' => date(),
+                        'is_ready' => 0
+                    ]);
+                    $model->save();
+                }
+                if($message_uid != - 1){
+                    Yii::info("last message uid = $message_uid");
+         
+                    //если появились новые сообщения, 
+                    //то сохраняем UID последнего сообщения
+                    $account->last_message_uid = $message_uid;
+                    $account->save();
+                } else {
+                    //нет новых сообщений
+                    Yii::info("no new messages");
                 }
  
             }
             $transaction->commit();
+            //закрываем IMAP-поток
+            imap_close($mail);
+                return ExitCode::OK;
+            
         } catch(\Exception $e) {
             $transaction->rollBack();
             throw $e;
@@ -121,41 +142,10 @@ class MailController extends Controller
             $transaction->rollBack();
             throw $e;
         }
-
  
-	//перебираем почтовые ящики
-	while($row = mysql_fetch_array($res)){
-		$mailbox_id = $row['id'];
-		$host = $row['host'];//адрес почтового сервера
-		$port = $row['port'];//порт почтового сервера
-		$user = $row['email'];//имя пользователя (почтовый ящик)
-		$password = $row['password'];//пароль к почтовому ящику
-		$last_uid = $row['last_message_uid'];//uid последнего считанного сообщения
 		
-		
-		
-		
- 
-		if($message_uid != - 1){
-			wr("last message uid = $message_uid");
- 
-			//если появились новые сообщения, 
-			//то сохраняем UID последнего сообщения
-			$sql = "UPDATE mailboxes 
-					SET last_message_uid = $message_uid
-					WHERE id = $mailbox_id";
-			mysql_query($sql) or die(mysql_error());
-		}else{
-			//нет новых сообщений
-			wr("no new messages");
-		}
 	}
- 
-	mysql_query("COMMIT");//завершаем транзакцию
- 
-	//закрываем IMAP-поток
-	imap_close($mail);
 
-        return ExitCode::OK;
-    }
+ 
+	
 }

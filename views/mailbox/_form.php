@@ -14,17 +14,15 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'password')->passwordInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'password')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'port')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'is_ssl')->textInput() ?>
+    <?= $form->field($model, 'is_ssl')->dropDownList(app\models\Mailbox::$yes_no) ?>
 
-    <?= $form->field($model, 'is_deleted')->textInput() ?>
-
-    <?= $form->field($model, 'last_message_uid')->textInput() ?>
+    <?= $form->field($model, 'is_deleted')->dropDownList(app\models\Mailbox::$yes_no) ?>
 
     <div class="form-group">
         <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>

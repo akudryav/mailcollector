@@ -20,6 +20,7 @@ use Yii;
  */
 class Mailbox extends \yii\db\ActiveRecord
 {
+    public static $yes_no = ['Нет', 'Да'];
     /**
      * {@inheritdoc}
      */
@@ -38,6 +39,8 @@ class Mailbox extends \yii\db\ActiveRecord
             [['is_ssl', 'is_deleted', 'last_message_uid'], 'integer'],
             [['email', 'password', 'host'], 'string', 'max' => 255],
             [['port'], 'string', 'max' => 10],
+            ['is_ssl', 'default', 'value' => 1],
+            ['is_deleted', 'default', 'value' => 0],
             [['email'], 'unique'],
         ];
     }
@@ -50,12 +53,12 @@ class Mailbox extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'email' => 'Email',
-            'password' => 'Password',
-            'host' => 'Host',
-            'port' => 'Port',
-            'is_ssl' => 'Is Ssl',
-            'is_deleted' => 'Is Deleted',
-            'last_message_uid' => 'Last Message Uid',
+            'password' => 'Пароль',
+            'host' => 'Сервер входящей почты (IMAP)',
+            'port' => 'Порт сервера',
+            'is_ssl' => 'Нужен SSL',
+            'is_deleted' => 'Аккаунт удален',
+            'last_message_uid' => 'Uid Последнего сообщения',
         ];
     }
 
