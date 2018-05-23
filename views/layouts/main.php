@@ -35,29 +35,13 @@ AppAsset::register($this);
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
-    $items_admin = [
-            ['label' => 'Письма', 'url' => ['message/index']],
-            ['label' => 'Почтовые Аккунты', 'url' => ['mailbox/index']],
-        ];
-    $items_user = [
-            ['label' => 'О системе', 'url' => ['site/about']],
-            Yii::$app->user->isGuest ? (
-                ['label' => 'Login', 'url' => ['site/login']]
-            ) : (
-                '<li>'
-                . Html::beginForm(['site/logout'], 'post')
-                . Html::submitButton(
-                    'Logout (' . Yii::$app->user->identity->username . ')',
-                    ['class' => 'btn btn-link logout']
-                )
-                . Html::endForm()
-                . '</li>'
-            )
-        ];
-    $items = $items_user;
-    if(!Yii::$app->user->isGuest) {
-        $items = array_merge($items_admin, $items_user);
-    }
+    $items = [
+        ['label' => 'Письма', 'url' => ['message/index']],
+        ['label' => 'Почтовые Аккунты', 'url' => ['mailbox/index']],
+        ['label' => 'О системе', 'url' => ['site/about']],
+        ['label' => 'Настройки', 'url' => ['settings/index']],
+    ];
+
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],     
         'items' => $items,
