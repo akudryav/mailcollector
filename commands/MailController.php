@@ -2,12 +2,14 @@
 
 namespace app\commands;
 use Yii;
+use yii\helpers\Html;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use app\models\Mailbox;
 use app\models\Message;
 
 /**
+ * http://kesh.kz/blog/%D0%BF%D0%B8%D1%88%D0%B5%D0%BC-%D1%81%D0%B2%D0%BE%D0%B9-%D1%81%D0%B1%D0%BE%D1%80%D1%89%D0%B8%D0%BA-%D0%BF%D0%B8%D1%81%D0%B5%D0%BC-%D0%BD%D0%B0-php/
 *предполагается, что данный скрипт будет запускаться планировщиком
 *через равные промежутки времени. Например, каждые 30 секунд.
 *Но может возникнуть ситуация, что предыдущий может не успеть завершить
@@ -33,27 +35,35 @@ class MailController extends Controller
      * Если файл блокировки существует и удалось получить время последнего
      * изменения файла, то значит предыдущий скрипт был прерван
      */
-    private function checkLock()
+    private function makeLock()
     {
-        $lock_path = Yii::getAlias('@runtime').'/'.$this->lock;
+        $lock_path = Yii::getAlias('@runtime').DIRECTORY_SEPARATOR.$this->lock;
         $aborted = file_exists($lock_path) ? filemtime($lock_path) : false;
         if($aborted){ //если выполнение предыдущего скрипта было прервано
-            Yii::info('Выполнение предыдущего скрипта было прервано'); //пишем в лог, что прервано
+            Yii::info('Выполнение предыдущего скрипта было прервано', 'mailer'); //пишем в лог, что прервано
         }
         $fp = fopen($lock_path,'w'); //открывает файл с возможностью записи
         if(!flock($fp,LOCK_EX|LOCK_NB)){ //если не удалось наложить блокировку, то значит предыдущий скрипт еще работает.
-            Yii::info("Предыдущий скрипт еще работает"); //пишем в лог, что занято
+            Yii::info('Предыдущий скрипт еще работает', 'mailer'); //пишем в лог, что занято
             return false;
         }
-        Yii::info("Начинаем проверять почту");
+        Yii::info('Начинаем проверять почту', 'mailer');
         return $fp;
+    }
+    
+    private function releaseLock($fp)
+    {
+        Yii::info('Закончили', 'mailer');
+        flock($fp, LOCK_UN);//снимаем блокировку с файла
+        fclose($fp);//закрываем файл
+        unlink(Yii::getAlias('@runtime').DIRECTORY_SEPARATOR.$this->lock);//удаляем файл
     }
     /**
      * чтение новых писем (без полной загрузки)
      */
     public function actionRead()
     {
-        $fp = $this->checkLock();
+        $fp = $this->makeLock();
         if(!$fp) return ExitCode::CANTCREAT;
         
         //отключаем Autocommit, будем сами управлять транзакциями
@@ -67,13 +77,14 @@ class MailController extends Controller
 
                 //строка подключения
                 $conn = "{{$account->host}:{$account->port}{$ssl}}";
-                Yii::info("Read {$account->email}, conn = $conn");
+                Yii::info("Read {$account->email}, conn = $conn", 'mailer');
+                echo "Read {$account->email}, conn = $conn".PHP_EOL;
 
                 //открываем IMAP-поток
                 $mail = imap_open($conn, $account->email, $account->password);
                 if(!$mail){		
                     //пишем влог сообщение о неудачной попытке подключения
-                    Yii::error("Error opening IMAP. " . imap_last_error());
+                    Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
                     continue;//переходим к следующему ящику
                 }
         /*
@@ -104,21 +115,24 @@ class MailController extends Controller
                 foreach($arr as $obj){
                     //получаем UID сообщения
                     $message_uid = $obj->uid;
-                    Yii::info("add message $message_uid");
+                    Yii::info("add message $message_uid", 'mailer');
 
                     //создаем запись в таблице messages,
                     //тем самым поставив сообщение в очередь на загрузку
                     $model = new Message();
-                    $model->load([
+                    $model->setAttributes([
                         'mailbox_id' => $account->id,
                         'uid' => $message_uid,
-                        'create_date' => date(),
+                        'create_date' => date("Y-m-d H:i:s"),
+                        'message_date' => $obj->date,
                         'is_ready' => 0
                     ]);
-                    $model->save();
+                    if(!$model->save()) {
+                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
+                    }
                 }
                 if($message_uid != - 1){
-                    Yii::info("last message uid = $message_uid");
+                    Yii::info("last message uid = $message_uid", 'mailer');
          
                     //если появились новые сообщения, 
                     //то сохраняем UID последнего сообщения
@@ -126,14 +140,16 @@ class MailController extends Controller
                     $account->save();
                 } else {
                     //нет новых сообщений
-                    Yii::info("no new messages");
+                    Yii::info('no new messages', 'mailer');
                 }
  
             }
             $transaction->commit();
             //закрываем IMAP-поток
             imap_close($mail);
-                return ExitCode::OK;
+            // удаляем блокировку
+            $this->releaseLock($fp);
+            return ExitCode::OK;
             
         } catch(\Exception $e) {
             $transaction->rollBack();
@@ -142,10 +158,9 @@ class MailController extends Controller
             $transaction->rollBack();
             throw $e;
         }
- 
+        
 		
 	}
 
- 
 	
 }

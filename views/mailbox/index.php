@@ -27,9 +27,14 @@ $this->params['breadcrumbs'][] = $this->title;
             'password',
             'host',
             'port',
-            //'is_ssl',
-            //'is_deleted',
-            //'last_message_uid',
+            [
+                'attribute'=>'is_deleted',
+                'format'=>'raw',
+                'value' => function($model) {
+                    return $model->statusName();
+                }
+            ],
+            'last_message_uid',
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

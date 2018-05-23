@@ -51,6 +51,9 @@ class MailboxController extends AdminController
     public function actionCreate()
     {
         $model = new Mailbox();
+        $model->port = 993;
+        $model->is_ssl = 1;
+        $model->is_deleted = 0;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);

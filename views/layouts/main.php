@@ -36,7 +36,7 @@ AppAsset::register($this);
         ],
     ]);
     $items_admin = [
-            ['label' => 'Письма', 'url' => ['site/index']],
+            ['label' => 'Письма', 'url' => ['message/index']],
             ['label' => 'Почтовые Аккунты', 'url' => ['mailbox/index']],
         ];
     $items_user = [

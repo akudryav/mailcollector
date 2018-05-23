@@ -57,9 +57,14 @@ class Mailbox extends \yii\db\ActiveRecord
             'host' => 'Сервер входящей почты (IMAP)',
             'port' => 'Порт сервера',
             'is_ssl' => 'Нужен SSL',
-            'is_deleted' => 'Аккаунт удален',
+            'is_deleted' => 'Аккаунт блокирован',
             'last_message_uid' => 'Uid Последнего сообщения',
         ];
+    }
+    
+    public function statusName()
+    {
+        return isset(self::$yes_no[$this->is_deleted]) ? self::$yes_no[$this->is_deleted] : 'unknown';
     }
 
     /**
