@@ -27,7 +27,6 @@ $this->params['breadcrumbs'][] = $this->title;
             'port',
             [
                 'attribute'=>'is_deleted',
-                'format'=>'raw',
                 'value' => function($model) {
                     return $model->statusName();
                 }

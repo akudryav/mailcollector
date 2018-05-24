@@ -38,7 +38,6 @@ $this->params['breadcrumbs'][] = $this->title;
             //'modify_date',
             [
                 'attribute'=>'is_ready',
-                'format'=>'raw',
                 'value' => function($model) {
                     return $model->statusName();
                 }

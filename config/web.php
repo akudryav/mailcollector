@@ -7,6 +7,7 @@ $config = [
     'id' => 'spaman',
     'name' => 'Spam Analytics',
     'basePath' => dirname(__DIR__),
+    'language' => 'ru-RU',
     'bootstrap' => ['log'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',

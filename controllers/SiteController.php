@@ -38,6 +38,14 @@ class SiteController extends Controller
     {
         return $this->render('index');
     }
+    /**
+     * Скачивание вложений.
+     */
+    public function actionDownload($filename)
+    {
+        ob_clean();
+        Yii::$app->response->sendFile($filename)->send();
+    }
 
 
     /**

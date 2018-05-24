@@ -335,6 +335,15 @@ class Message extends \yii\db\ActiveRecord
         $arr = explode(".",$filename);
         return count($arr) > 1 ? "." . end($arr) : "";
     }
+    
+    public function showAttachments()
+    {
+        $list = [];
+        foreach ($this->attachments as $r) {
+            $list[] = Html::a($r->file_name, ['site/download', 'filename' => $r->location]);
+        }
+        return implode('<br>', $list);
+    }
 
     /**
      * @return \yii\db\ActiveQuery
