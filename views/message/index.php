@@ -20,22 +20,29 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
-
             'id',
-            'mailbox_id',
+            [
+                'attribute' => 'mailbox',
+                'value' => 'mailbox.email'
+            ],
             'uid',
             //'from_ip',
             //'from_domain',
             'subject',
             //'body_text:ntext',
             //'body_html:ntext',
-            //'attachment_count',
+            'attachment_count',
             //'header:ntext',
             'message_date',
             'create_date',
             //'modify_date',
-            'is_ready',
+            [
+                'attribute'=>'is_ready',
+                'format'=>'raw',
+                'value' => function($model) {
+                    return $model->statusName();
+                }
+            ],
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

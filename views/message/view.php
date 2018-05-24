@@ -29,19 +29,24 @@ $this->params['breadcrumbs'][] = $this->title;
         'model' => $model,
         'attributes' => [
             'id',
-            'mailbox_id',
+            'mailbox.email',
             'uid',
             'from_ip',
             'from_domain',
             'subject',
             'body_text:ntext',
-            'body_html:ntext',
+            'body_html:html',
             'attachment_count',
             'header:ntext',
-            'message_date',
-            'create_date',
-            'modify_date',
-            'is_ready',
+            'message_date:datetime',
+            'create_date:datetime',
+            'modify_date:datetime',
+            [
+                'attribute'=>'is_ready',
+                'value' => function($model) {
+                    return $model->statusName();
+                }
+            ],
         ],
     ]) ?>
 

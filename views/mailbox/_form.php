@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use app\models\Mailbox
 
 /* @var $this yii\web\View */
 /* @var $model app\models\Mailbox */
@@ -20,9 +21,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'port')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'is_ssl')->dropDownList(app\models\Mailbox::$yes_no) ?>
+    <?= $form->field($model, 'is_ssl')->dropDownList(Mailbox::$yes_no) ?>
 
-    <?= $form->field($model, 'is_deleted')->dropDownList(app\models\Mailbox::$yes_no) ?>
+    <?= $form->field($model, 'is_deleted')->dropDownList(Mailbox::$yes_no) ?>
 
     <div class="form-group">
         <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>

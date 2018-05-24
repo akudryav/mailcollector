@@ -67,26 +67,27 @@ class MailController extends Controller
         if (!$fp) return ExitCode::CANTCREAT;
 
         foreach (Mailbox::find()->where(['is_deleted' => 0])->all() as $account) {
+            //если подключение идет через SSL, 
+            //то достаточно добавить "/ssl" к строке подключения, и
+            //поддержка SSL будет включена
+            $ssl = $account->is_ssl ? "/ssl" : "";
+
+            //строка подключения
+            $conn = "{{$account->host}:{$account->port}{$ssl}}";
+            Yii::info("Read {$account->email}, conn = $conn", 'mailer');
+            echo "Read {$account->email}, conn = $conn" . PHP_EOL;
+
+            //открываем IMAP-поток
+            $mail = imap_open($conn, $account->email, $account->password);
+            if (!$mail) {
+                //пишем влог сообщение о неудачной попытке подключения
+                Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
+                continue;//переходим к следующему ящику
+            }
             try {
                 //отключаем Autocommit, будем сами управлять транзакциями
                 $transaction = Mailbox::getDb()->beginTransaction();
-                //если подключение идет через SSL, 
-                //то достаточно добавить "/ssl" к строке подключения, и
-                //поддержка SSL будет включена
-                $ssl = $account->is_ssl ? "/ssl" : "";
-
-                //строка подключения
-                $conn = "{{$account->host}:{$account->port}{$ssl}}";
-                Yii::info("Read {$account->email}, conn = $conn", 'mailer');
-                echo "Read {$account->email}, conn = $conn" . PHP_EOL;
-
-                //открываем IMAP-поток
-                $mail = imap_open($conn, $account->email, $account->password);
-                if (!$mail) {
-                    //пишем влог сообщение о неудачной попытке подключения
-                    Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
-                    continue;//переходим к следующему ящику
-                }
+                
                 /*
                 Считываем только письма, у которых UID больше,
                 чем UID последнего считанного сообщения. Для этого воспользуемся
@@ -160,6 +161,65 @@ class MailController extends Controller
 
 
     }
+     /**
+     * Скачивание писем (полная загрузка)
+     */
+    public function actionLoad()
+    {
+        //составим список только тех почтовых ящиков,
+        //сообщения которых еще не скачаны
+        $ids = Mailbox::getUnloaded();
+        $fp = $this->makeLock();
+        if (!$fp) return ExitCode::CANTCREAT;
 
+        foreach (Mailbox::findAll($ids) as $account) {
+            $ssl = $account->is_ssl ? "/ssl" : "";
+            //строка подключения
+            $conn = "{{$account->host}:{$account->port}{$ssl}}";
+            Yii::info("Read {$account->email}, conn = $conn", 'mailer');
+            echo "Read {$account->email}, conn = $conn" . PHP_EOL;
+
+            //открываем IMAP-поток
+            $mail = imap_open($conn, $account->email, $account->password);
+            if (!$mail) {
+                //пишем влог сообщение о неудачной попытке подключения
+                Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
+                continue;//переходим к следующему ящику
+            }
+            //получаем список сообщений, которые необходимо скачать с почтового ящика
+            foreach ($account->getMessages()->where(['is_ready' => 0])->all() as $message){
+                try {
+                    //отключаем Autocommit, будем сами управлять транзакциями
+                    $transaction = Mailbox::getDb()->beginTransaction();
+                    Yii::info("load message {$message->uid}", 'mailer');
+                    echo "load message {$message->uid}" . PHP_EOL;
+                    $message->setMbox($mail);
+                    // загрузка данных
+                    $message->loadData();
+                    // загрузка адресов
+                    $message->loadAddress();
+                    // загрузка вложений
+                    $message->loadAttaches();
+                    if (!$message->save()) {
+                        Yii::error('Error save message. ' . Html::errorSummary($message), 'mailer');
+                    }
+
+                } catch (\Exception $e) {
+                    $transaction->rollBack();
+                    throw $e;
+                } catch (\Throwable $e) {
+                    $transaction->rollBack();
+                    throw $e;
+                }
+                $transaction->commit();
+            }
+            //закрываем IMAP-поток
+            imap_close($mail);
+        }
+
+        // удаляем блокировку
+        $this->releaseLock($fp);
+        return ExitCode::OK;
+    }
 
 }

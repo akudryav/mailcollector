@@ -3,7 +3,7 @@
 namespace app\models;
 
 use Yii;
-
+use yii\helpers\ArrayHelper;
 /**
  * This is the model class for table "mailbox".
  *
@@ -73,5 +73,19 @@ class Mailbox extends \yii\db\ActiveRecord
     public function getMessages()
     {
         return $this->hasMany(Message::className(), ['mailbox_id' => 'id']);
+    }
+      /**
+     * получение списка ящиков по которым есть незагруженные письма
+     */
+    public static function getUnloaded()
+    {
+        $array = self::find()
+        ->select(['mailbox.id'])
+        ->joinWith('messages', false)
+        ->where(['message.is_ready' => 0, 'mailbox.is_deleted' => 0])
+        ->groupBy(['mailbox.id'])
+        ->asArray()
+        ->all();
+        return ArrayHelper::getColumn($array, 'id');
     }
 }
