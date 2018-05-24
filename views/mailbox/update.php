@@ -5,8 +5,8 @@ use yii\helpers\Html;
 /* @var $this yii\web\View */
 /* @var $model app\models\Mailbox */
 
-$this->title = 'Update Mailbox: ' . $model->id;
-$this->params['breadcrumbs'][] = ['label' => 'Mailboxes', 'url' => ['index']];
+$this->title = 'Изменение Аккаунта: ' . $model->id;
+$this->params['breadcrumbs'][] = ['label' => 'Все Аккаунты', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->id, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = 'Update';
 ?>

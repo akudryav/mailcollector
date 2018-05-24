@@ -3,24 +3,25 @@
 namespace app\controllers;
 
 use Yii;
-use app\models\Message;
+use app\models\Server;
 use yii\data\ActiveDataProvider;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
 
 /**
- * MessageController implements the CRUD actions for Message model.
+ * ServerController implements the CRUD actions for Server model.
  */
-class MessageController extends AdminController
+class ServerController extends AdminController
 {
+
     /**
-     * Lists all Message models.
+     * Lists all Server models.
      * @return mixed
      */
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => Message::find(),
+            'query' => Server::find(),
         ]);
 
         return $this->render('index', [
@@ -29,7 +30,7 @@ class MessageController extends AdminController
     }
 
     /**
-     * Displays a single Message model.
+     * Displays a single Server model.
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
@@ -41,14 +42,23 @@ class MessageController extends AdminController
         ]);
     }
 
+    public function actionData($id)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $model = $this->findModel($id);
+        return $model;
+    }
+
     /**
-     * Creates a new Message model.
+     * Creates a new Server model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
     public function actionCreate()
     {
-        $model = new Message();
+        $model = new Server();
+        $model->port = '993';
+        $model->is_ssl = 1;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
@@ -60,7 +70,7 @@ class MessageController extends AdminController
     }
 
     /**
-     * Updates an existing Message model.
+     * Updates an existing Server model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
@@ -80,7 +90,7 @@ class MessageController extends AdminController
     }
 
     /**
-     * Deletes an existing Message model.
+     * Deletes an existing Server model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
@@ -94,15 +104,15 @@ class MessageController extends AdminController
     }
 
     /**
-     * Finds the Message model based on its primary key value.
+     * Finds the Server model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
-     * @return Message the loaded model
+     * @return Server the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findModel($id)
     {
-        if (($model = Message::findOne($id)) !== null) {
+        if (($model = Server::findOne($id)) !== null) {
             return $model;
         }
 

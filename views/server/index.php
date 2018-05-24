@@ -6,28 +6,26 @@ use yii\grid\GridView;
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = 'Attachments';
+$this->title = 'Серверы';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="attachment-index">
+<div class="server-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Create Attachment', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Добавить сервер', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
 
             'id',
-            'message_id',
-            'file_name',
-            'mime_type',
-            'file_size',
-            //'location',
+            'name',
+            'host',
+            'port',
+            'is_ssl',
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

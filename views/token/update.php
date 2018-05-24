@@ -3,14 +3,14 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\Attachment */
+/* @var $model app\models\Token */
 
-$this->title = 'Update Attachment: ' . $model->id;
-$this->params['breadcrumbs'][] = ['label' => 'Attachments', 'url' => ['index']];
+$this->title = 'Изменить токен: ' . $model->id;
+$this->params['breadcrumbs'][] = ['label' => 'Все Токены', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->id, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = 'Update';
 ?>
-<div class="attachment-update">
+<div class="token-update">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

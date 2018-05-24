@@ -4,13 +4,13 @@ use yii\helpers\Html;
 
 
 /* @var $this yii\web\View */
-/* @var $model app\models\Attachment */
+/* @var $model app\models\Token */
 
-$this->title = 'Create Attachment';
-$this->params['breadcrumbs'][] = ['label' => 'Attachments', 'url' => ['index']];
+$this->title = 'Добавление Токена';
+$this->params['breadcrumbs'][] = ['label' => 'Все Токены', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="attachment-create">
+<div class="token-create">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

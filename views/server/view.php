@@ -4,13 +4,13 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\Mailbox */
+/* @var $model app\models\Server */
 
-$this->title = $model->id;
-$this->params['breadcrumbs'][] = ['label' => 'Все Аккаунты', 'url' => ['index']];
+$this->title = $model->name;
+$this->params['breadcrumbs'][] = ['label' => 'Все Серверы', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="mailbox-view">
+<div class="server-view">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
@@ -29,13 +29,10 @@ $this->params['breadcrumbs'][] = $this->title;
         'model' => $model,
         'attributes' => [
             'id',
-            'email:email',
-            'password',
+            'name',
             'host',
             'port',
             'is_ssl',
-            'is_deleted',
-            'last_message_uid',
         ],
     ]) ?>
 

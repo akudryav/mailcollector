@@ -4,13 +4,13 @@ use yii\helpers\Html;
 
 
 /* @var $this yii\web\View */
-/* @var $model app\models\Message */
+/* @var $model app\models\Server */
 
-$this->title = 'Create Message';
-$this->params['breadcrumbs'][] = ['label' => 'Messages', 'url' => ['index']];
+$this->title = 'Добавить Сервер';
+$this->params['breadcrumbs'][] = ['label' => 'Все Серверы', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="message-create">
+<div class="server-create">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

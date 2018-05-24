@@ -7,7 +7,6 @@ use app\models\Mailbox;
 use yii\data\ActiveDataProvider;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
  * MailboxController implements the CRUD actions for Mailbox model.
@@ -51,7 +50,7 @@ class MailboxController extends AdminController
     public function actionCreate()
     {
         $model = new Mailbox();
-        $model->port = 993;
+        $model->port = '993';
         $model->is_ssl = 1;
         $model->is_deleted = 0;
 

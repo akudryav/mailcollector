@@ -36,7 +36,7 @@ class Mailbox extends \yii\db\ActiveRecord
     {
         return [
             [['email', 'password', 'host'], 'required'],
-            [['is_ssl', 'is_deleted', 'last_message_uid'], 'integer'],
+            [['is_ssl', 'is_deleted', 'last_message_uid', 'server_id'], 'integer'],
             [['email', 'password', 'host'], 'string', 'max' => 255],
             [['port'], 'string', 'max' => 10],
             ['is_ssl', 'default', 'value' => 1],
@@ -54,6 +54,7 @@ class Mailbox extends \yii\db\ActiveRecord
             'id' => 'ID',
             'email' => 'Email',
             'password' => 'Пароль',
+            'server_id' => 'Почтовый сервер',
             'host' => 'Сервер входящей почты (IMAP)',
             'port' => 'Порт сервера',
             'is_ssl' => 'Нужен SSL',

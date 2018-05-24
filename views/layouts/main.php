@@ -39,7 +39,10 @@ AppAsset::register($this);
         ['label' => 'Письма', 'url' => ['message/index']],
         ['label' => 'Почтовые Аккунты', 'url' => ['mailbox/index']],
         ['label' => 'О системе', 'url' => ['site/about']],
-        ['label' => 'Настройки', 'url' => ['settings/index']],
+        ['label' => 'Настройки', 'url' => '#', 'items' => [
+            ['label' => 'Почтовые сервера', 'url' => ['server/index']],
+            ['label' => 'Токены', 'url' => ['token/index']],
+        ]],
     ];
 
     echo Nav::widget([

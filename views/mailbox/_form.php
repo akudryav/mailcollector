@@ -2,7 +2,12 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
-use app\models\Mailbox
+use app\models\Mailbox;
+use app\models\Server;
+use yii\helpers\ArrayHelper;
+
+$servers = Server::find()->all();
+$listData=ArrayHelper::map($servers,'id','name');
 
 /* @var $this yii\web\View */
 /* @var $model app\models\Mailbox */
@@ -17,6 +22,17 @@ use app\models\Mailbox
 
     <?= $form->field($model, 'password')->textInput(['maxlength' => true]) ?>
 
+    <?= $form->field($model, 'server_id')->dropDownList($listData,
+    ['prompt'=>'Другой...',
+        'onchange' => '
+                $.get( "/server/data?id="+$(this).val(), function( data ) {
+                  $( "#mailbox-host" ).val( data.host );
+                  $( "#mailbox-port" ).val( data.port );
+                  $( "#mailbox-is_ssl" ).val( data.is_ssl );
+                });
+            '
+    ]) ?>
+
     <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'port')->textInput(['maxlength' => true]) ?>
@@ -26,7 +42,7 @@ use app\models\Mailbox
     <?= $form->field($model, 'is_deleted')->dropDownList(Mailbox::$yes_no) ?>
 
     <div class="form-group">
-        <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
+        <?= Html::submitButton('Сохранить', ['class' => 'btn btn-success']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>
