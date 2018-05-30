@@ -3,7 +3,10 @@
 namespace app\controllers;
 
 use Yii;
+use yii\helpers\Html;
 use app\models\Mailbox;
+use app\models\UploadForm;
+use yii\web\UploadedFile;
 use yii\data\ActiveDataProvider;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
@@ -26,9 +29,41 @@ class MailboxController extends AdminController
 
         return $this->render('index', [
             'dataProvider' => $dataProvider,
+            'csv' => new UploadForm(),
         ]);
     }
+    /**
+    * Загрузка данных из  csv
+    */
+    public function actionImport()
+    {
+        $model = new UploadForm();
+        if (Yii::$app->request->isPost) {
+            $model->csvFile = UploadedFile::getInstance($model, 'csvFile');
+            if ($file = $model->upload()) {
+                // file is uploaded successfully
+                $handle = fopen($file, 'r');
 
+                while (($data = fgetcsv($handle, 1000, ',')) !== FALSE) {
+                    $boxmodel=new Mailbox();
+                    $boxmodel->email=$data[0];
+                    $boxmodel->password=$data[1];
+                    $boxmodel->host = $data[2];
+                    $boxmodel->port = $data[3];
+                    $boxmodel->is_ssl = $data[4];
+                    if(!$boxmodel->save()){
+                        Yii::$app->getSession()->setFlash('warning', Html::errorSummary($boxmodel));
+                    }
+                }
+                Yii::$app->getSession()->setFlash('success', 'Данные успешно импортированы');
+                fclose($handle);
+                unlink ($file);
+            } else {
+                Yii::$app->getSession()->setFlash('error', Html::errorSummary($model));
+            }
+        }
+        return $this->redirect(['index']);
+    }
     /**
      * Displays a single Mailbox model.
      * @param integer $id
@@ -55,6 +90,7 @@ class MailboxController extends AdminController
         $model->is_deleted = 0;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
@@ -75,6 +111,7 @@ class MailboxController extends AdminController
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
             return $this->redirect(['view', 'id' => $model->id]);
         }
 

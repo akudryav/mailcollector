@@ -22,16 +22,7 @@ $listData=ArrayHelper::map($servers,'id','name');
 
     <?= $form->field($model, 'password')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'server_id')->dropDownList($listData,
-    ['prompt'=>'Другой...',
-        'onchange' => '
-                $.get( "/server/data?id="+$(this).val(), function( data ) {
-                  $( "#mailbox-host" ).val( data.host );
-                  $( "#mailbox-port" ).val( data.port );
-                  $( "#mailbox-is_ssl" ).val( data.is_ssl );
-                });
-            '
-    ]) ?>
+    <?= $form->field($model, 'server_id')->dropDownList($listData, ['prompt'=>'Другой...']) ?>
 
     <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
 

@@ -61,6 +61,7 @@ class ServerController extends AdminController
         $model->is_ssl = 1;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
@@ -81,6 +82,7 @@ class ServerController extends AdminController
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
             return $this->redirect(['view', 'id' => $model->id]);
         }
 

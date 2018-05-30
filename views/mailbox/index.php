@@ -15,7 +15,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <p>
         <?= Html::a('Добавить Аккаунт', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Импорт из CSV', '#', ['id' => 'csv_button', 'class' => 'btn btn-primary']) ?>
     </p>
+    
+    <?php echo $this->render('_csvform', ['model' => $csv]);?>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
