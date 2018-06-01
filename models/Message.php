@@ -161,11 +161,20 @@ class Message extends \yii\db\ActiveRecord
                 if (!$partNumber) {
                     $partNumber = 1;
                 }
-                $charset = $structure->parameters[0]->value;//кодировка символов
+                if( is_array($structure->parameters) && isset($structure->parameters[0]->value) ){
+                    $charset = $structure->parameters[0]->value;//кодировка символов
+                } else {
+                    $charset = false;
+                }
+                
                 //imap_fetchbody - извлекает определённый раздел тела сообщения
                 $text = imap_fetchbody($this->mbox, $this->uid, $partNumber, FT_UID);
                 //0 - 7BIT; 1 - 8BIT; 2 - BINARY; 3 - BASE64; 4 - QUOTED-PRINTABLE; 5 - OTHER
                 switch ($structure->encoding) {
+                    case 1:
+                        //imap_8bit 
+                        $text = imap_8bit($text);
+                        break;
                     case 3:
                         //imap_base64 - декодирует BASE64-кодированный текст
                         $text = imap_base64($text);
@@ -176,7 +185,7 @@ class Message extends \yii\db\ActiveRecord
                         break;
                 }
                 // меняем кодировку на utf-8
-                if($mimetype == 'TEXT/PLAIN' || $mimetype == 'TEXT/HTML'){
+                if($charset && ($mimetype == 'TEXT/PLAIN' || $mimetype == 'TEXT/HTML')){
                     $text = iconv($charset, 'UTF-8', $text);
                 }
                 return $text;

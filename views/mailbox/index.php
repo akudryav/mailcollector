@@ -22,12 +22,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
         'columns' => [
             'id',
             'email:email',
-            'password',
-            'host',
-            'port',
+            'buyer',
+            'phone',
             [
                 'attribute'=>'is_deleted',
                 'value' => function($model) {

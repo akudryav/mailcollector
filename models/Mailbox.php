@@ -10,9 +10,6 @@ use yii\helpers\ArrayHelper;
  * @property int $id
  * @property string $email
  * @property string $password
- * @property string $host
- * @property string $port
- * @property int $is_ssl
  * @property int $is_deleted
  * @property int $last_message_uid
  *
@@ -35,13 +32,12 @@ class Mailbox extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['email', 'password', 'host'], 'required'],
-            [['is_ssl', 'is_deleted', 'last_message_uid', 'server_id'], 'integer'],
-            [['email', 'password', 'host'], 'string', 'max' => 255],
-            [['port'], 'string', 'max' => 10],
-            ['is_ssl', 'default', 'value' => 1],
+            [['email', 'password'], 'required'],
+            [['is_deleted', 'last_message_uid'], 'integer'],
+            [['email', 'password', 'buyer', 'phone'], 'string', 'max' => 255],
             ['is_deleted', 'default', 'value' => 0],
             [['email'], 'unique'],
+            ['server_id', 'exist', 'targetClass' => Server::className(), 'targetAttribute' => 'id'],
         ];
     }
 
@@ -55,14 +51,34 @@ class Mailbox extends \yii\db\ActiveRecord
             'email' => 'Email',
             'password' => 'Пароль',
             'server_id' => 'Почтовый сервер',
-            'host' => 'Сервер входящей почты (IMAP)',
-            'port' => 'Порт сервера',
-            'is_ssl' => 'Нужен SSL',
+            'buyer' => 'Buyer name', 
+            'phone' => 'Телефон для подтверждений',
             'is_deleted' => 'Аккаунт блокирован',
             'last_message_uid' => 'Uid Последнего сообщения',
         ];
     }
     
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        $this->server_id = Server::findIdByMail($this->email);
+        if(!$this->server_id) {
+            $this->addError('email', 'Не найден почтовый сервер для '.$this->email);
+            return false;
+        }
+        return true;
+    }
+    
+    public static function findByMail($email)
+    {
+        return self::find()
+            ->where(['email' => trim($email)])
+            ->one();
+    }
+
     public function statusName()
     {
         return isset(self::$yes_no[$this->is_deleted]) ? self::$yes_no[$this->is_deleted] : 'unknown';
@@ -75,7 +91,16 @@ class Mailbox extends \yii\db\ActiveRecord
     {
         return $this->hasMany(Message::className(), ['mailbox_id' => 'id']);
     }
-      /**
+    
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getServer()
+    {
+        return $this->hasOne(Server::className(), ['id' => 'server_id']);
+    }
+    
+    /**
      * получение списка ящиков по которым есть незагруженные письма
      */
     public static function getUnloaded()

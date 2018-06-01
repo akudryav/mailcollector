@@ -12,9 +12,9 @@ use yii\widgets\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
-
     <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
+
+    <?= $form->field($model, 'imap')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'port')->textInput(['maxlength' => true]) ?>
 

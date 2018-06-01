@@ -56,6 +56,31 @@ class MailController extends Controller
         fclose($fp);//закрываем файл
         unlink(Yii::getAlias('@runtime') . DIRECTORY_SEPARATOR . $this->lock);//удаляем файл
     }
+    
+    private function connectImap($account)
+    {
+        // получаем данные почтового сервера
+        $server = $account->server;
+        //если подключение идет через SSL, 
+        //то достаточно добавить "/ssl" к строке подключения, и
+        //поддержка SSL будет включена
+        $ssl = $server->is_ssl ? "/ssl" : "";
+
+        //строка подключения
+        $conn = "{{$server->imap}:{$server->port}{$ssl}}";
+        Yii::info("Read {$account->email}, conn = $conn", 'mailer');
+        echo "Read {$account->email}, conn = $conn ";
+
+        //открываем IMAP-поток
+        $imap = @imap_open($conn, $account->email, $account->password);
+        $errors = imap_errors();
+        $alerts = imap_alerts();
+        // выводим ошибки
+        if(!empty($errors)) {
+            echo $errors[0].PHP_EOL;
+        }
+        return $imap;
+    }
 
     /**
      * чтение новых писем (без полной загрузки)
@@ -66,18 +91,8 @@ class MailController extends Controller
         if (!$fp) return ExitCode::CANTCREAT;
 
         foreach (Mailbox::find()->where(['is_deleted' => 0])->all() as $account) {
-            //если подключение идет через SSL, 
-            //то достаточно добавить "/ssl" к строке подключения, и
-            //поддержка SSL будет включена
-            $ssl = $account->is_ssl ? "/ssl" : "";
-
-            //строка подключения
-            $conn = "{{$account->host}:{$account->port}{$ssl}}";
-            Yii::info("Read {$account->email}, conn = $conn", 'mailer');
-            echo "Read {$account->email}, conn = $conn" . PHP_EOL;
-
-            //открываем IMAP-поток
-            $mail = imap_open($conn, $account->email, $account->password);
+            $mail = $this->connectImap($account);
+            
             if (!$mail) {
                 //пишем влог сообщение о неудачной попытке подключения
                 Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
@@ -111,6 +126,7 @@ class MailController extends Controller
                 $range = "$uid_from:$uid_to";
                 $arr = imap_fetch_overview($mail, $range, FT_UID);
                 $message_uid = -1;
+                $msg_count = 0;
                 //перебираем сообщения
                 foreach ($arr as $obj) {
                     //получаем UID сообщения
@@ -128,6 +144,8 @@ class MailController extends Controller
                     ]);
                     if (!$model->save()) {
                         Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
+                    } else {
+                        $msg_count ++;
                     }
                 }
                 if ($message_uid != -1) {
@@ -141,6 +159,7 @@ class MailController extends Controller
                     //нет новых сообщений
                     Yii::info('no new messages', 'mailer');
                 }
+                echo 'New messages: '.$msg_count. PHP_EOL;
 
             } catch (\Exception $e) {
                 $transaction->rollBack();
@@ -172,14 +191,7 @@ class MailController extends Controller
         if (!$fp) return ExitCode::CANTCREAT;
 
         foreach (Mailbox::findAll($ids) as $account) {
-            $ssl = $account->is_ssl ? "/ssl" : "";
-            //строка подключения
-            $conn = "{{$account->host}:{$account->port}{$ssl}}";
-            Yii::info("Read {$account->email}, conn = $conn", 'mailer');
-            echo "Read {$account->email}, conn = $conn" . PHP_EOL;
-
-            //открываем IMAP-поток
-            $mail = imap_open($conn, $account->email, $account->password);
+            $mail = $this->connectImap($account);
             if (!$mail) {
                 //пишем влог сообщение о неудачной попытке подключения
                 Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');

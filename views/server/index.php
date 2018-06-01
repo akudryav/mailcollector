@@ -22,8 +22,8 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
 
             'id',
-            'name',
             'host',
+            'imap',
             'port',
             'is_ssl',
 

@@ -5,9 +5,9 @@ namespace app\controllers;
 use Yii;
 use yii\helpers\Html;
 use app\models\Mailbox;
+use app\models\MailboxSearch;
 use app\models\UploadForm;
 use yii\web\UploadedFile;
-use yii\data\ActiveDataProvider;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
 
@@ -23,12 +23,12 @@ class MailboxController extends AdminController
      */
     public function actionIndex()
     {
-        $dataProvider = new ActiveDataProvider([
-            'query' => Mailbox::find(),
-        ]);
+        $searchModel = new MailboxSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->get());
 
         return $this->render('index', [
             'dataProvider' => $dataProvider,
+            'searchModel' => $searchModel,
             'csv' => new UploadForm(),
         ]);
     }
@@ -43,19 +43,34 @@ class MailboxController extends AdminController
             if ($file = $model->upload()) {
                 // file is uploaded successfully
                 $handle = fopen($file, 'r');
-
-                while (($data = fgetcsv($handle, 1000, ',')) !== FALSE) {
-                    $boxmodel=new Mailbox();
-                    $boxmodel->email=$data[0];
+                // счетчики 
+                $row = 1; $inserted = 0; $updated = 0; $error = 0;
+                while (($data = fgetcsv($handle, 1000, ';')) !== FALSE) {
+                    $row ++;
+                    $is_new = false;
+                    if(1 == $row) { // пропускаем первую строку заголовков
+                        continue;
+                    }
+                    $boxmodel = Mailbox::findByMail($data[0]);
+                    // если нет создаем новую запись
+                    if(null == $boxmodel){
+                        $boxmodel=new Mailbox();
+                        $boxmodel->email=$data[0];
+                        $is_new = true;
+                    } 
+                   
                     $boxmodel->password=$data[1];
-                    $boxmodel->host = $data[2];
-                    $boxmodel->port = $data[3];
-                    $boxmodel->is_ssl = $data[4];
+                    $boxmodel->buyer = $data[2];
+                    $boxmodel->phone = $data[3];
                     if(!$boxmodel->save()){
-                        Yii::$app->getSession()->setFlash('warning', Html::errorSummary($boxmodel));
+                        Yii::$app->getSession()->setFlash('warning', 'Строка '.($row-1). Html::errorSummary($boxmodel));
+                        $error ++;
+                    } else {
+                        if($is_new) $inserted ++; else $updated ++;
                     }
                 }
-                Yii::$app->getSession()->setFlash('success', 'Данные успешно импортированы');
+                Yii::$app->getSession()->setFlash('info', 'Данные импортированы. Добавлено: '.
+                        $inserted. ' Обновлено: '.$updated. ' Ошибок: '.$error);
                 fclose($handle);
                 unlink ($file);
             } else {
@@ -85,8 +100,6 @@ class MailboxController extends AdminController
     public function actionCreate()
     {
         $model = new Mailbox();
-        $model->port = '993';
-        $model->is_ssl = 1;
         $model->is_deleted = 0;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {

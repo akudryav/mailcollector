@@ -6,9 +6,6 @@ use app\models\Mailbox;
 use app\models\Server;
 use yii\helpers\ArrayHelper;
 
-$servers = Server::find()->all();
-$listData=ArrayHelper::map($servers,'id','name');
-
 /* @var $this yii\web\View */
 /* @var $model app\models\Mailbox */
 /* @var $form yii\widgets\ActiveForm */
@@ -22,13 +19,9 @@ $listData=ArrayHelper::map($servers,'id','name');
 
     <?= $form->field($model, 'password')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'server_id')->dropDownList($listData, ['prompt'=>'Другой...']) ?>
+    <?= $form->field($model, 'buyer')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'port')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'is_ssl')->dropDownList(Mailbox::$yes_no) ?>
+    <?= $form->field($model, 'phone')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'is_deleted')->dropDownList(Mailbox::$yes_no) ?>
 

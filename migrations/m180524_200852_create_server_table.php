@@ -21,25 +21,25 @@ class m180524_200852_create_server_table extends Migration
         ]);
         // добавляем базовый набор
         $this->insert('server', [
-            'name' => 'Google',
+            'name' => 'gmail.com',
             'host' => 'imap.gmail.com',
             'port' => '993',
             'is_ssl' => 1,
         ]);
         $this->insert('server', [
-            'name' => 'Yahoo',
+            'name' => 'yahoo.com',
             'host' => 'imap.mail.yahoo.com',
             'port' => '993',
             'is_ssl' => 1,
         ]);
         $this->insert('server', [
-            'name' => 'Outlook',
+            'name' => 'outlook.com',
             'host' => 'imap-mail.outlook.com',
             'port' => '993',
             'is_ssl' => 1,
         ]);
         $this->insert('server', [
-            'name' => 'AOL',
+            'name' => 'aol.com',
             'host' => 'imap.aol.com',
             'port' => '993',
             'is_ssl' => 1,

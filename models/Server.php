@@ -32,11 +32,11 @@ class Server extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'host'], 'required'],
+            [['imap', 'host'], 'required'],
             [['is_ssl'], 'integer'],
-            [['name', 'host'], 'string', 'max' => 255],
+            [['imap', 'host'], 'string', 'max' => 255],
             [['port'], 'string', 'max' => 10],
-            [['name'], 'unique'],
+            [['host'], 'unique'],
         ];
     }
 
@@ -47,11 +47,24 @@ class Server extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'name' => 'Name',
-            'host' => 'Host',
-            'port' => 'Port',
-            'is_ssl' => 'Is Ssl',
+            'imap' => 'Сервер IMAP',
+            'host' => 'Почтовый домен',
+            'port' => 'Порт IMAP',
+            'is_ssl' => 'Нужен SSL',
         ];
+    }
+    
+    public static function findIdByMail($email)
+    {
+        $host = substr(strrchr($email, "@"), 1);
+        $model = self::find()
+            ->where(['host' => $host])
+            ->one();
+        
+        if ($model !== null) {
+            return $model->id;
+        }
+        return false;
     }
 
     public function statusName()
