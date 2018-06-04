@@ -6,7 +6,7 @@ use Yii;
 use yii\helpers\Html;
 use app\models\Mailbox;
 use app\models\MailboxSearch;
-use app\models\UploadForm;
+use app\models\CsvUploadForm;
 use yii\web\UploadedFile;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
@@ -29,7 +29,7 @@ class MailboxController extends AdminController
         return $this->render('index', [
             'dataProvider' => $dataProvider,
             'searchModel' => $searchModel,
-            'csv' => new UploadForm(),
+            'csv' => new CsvUploadForm(),
         ]);
     }
     /**
@@ -37,18 +37,17 @@ class MailboxController extends AdminController
     */
     public function actionImport()
     {
-        $model = new UploadForm();
+        $model = new CsvUploadForm();
         if (Yii::$app->request->isPost) {
             $model->csvFile = UploadedFile::getInstance($model, 'csvFile');
-            if ($file = $model->upload()) {
-                // file is uploaded successfully
-                $handle = fopen($file, 'r');
+            if ($model->upload()) {
+                $delimeter = $model->detectDelimiter();
+                $handle = fopen($model->path, 'r');
                 // счетчики 
                 $row = 1; $inserted = 0; $updated = 0; $error = 0;
-                while (($data = fgetcsv($handle, 1000, ';')) !== FALSE) {
-                    $row ++;
+                while (($data = fgetcsv($handle, 1000, $delimeter)) !== FALSE) {
                     $is_new = false;
-                    if(1 == $row) { // пропускаем первую строку заголовков
+                    if (!filter_var($data[0], FILTER_VALIDATE_EMAIL)) { // пропускаем строку, если первым не email
                         continue;
                     }
                     $boxmodel = Mailbox::findByMail($data[0]);
@@ -60,19 +59,20 @@ class MailboxController extends AdminController
                     } 
                    
                     $boxmodel->password=$data[1];
-                    $boxmodel->buyer = $data[2];
-                    $boxmodel->phone = $data[3];
+                    $boxmodel->buyer = isset($data[2]) ? $data[2] : null;
+                    $boxmodel->phone = isset($data[3]) ? $data[3] : null;
                     if(!$boxmodel->save()){
-                        Yii::$app->getSession()->setFlash('warning', 'Строка '.($row-1). Html::errorSummary($boxmodel));
+                        Yii::$app->getSession()->setFlash('warning', 'Строка '.$row. Html::errorSummary($boxmodel));
                         $error ++;
                     } else {
                         if($is_new) $inserted ++; else $updated ++;
                     }
+                    $row ++;
                 }
                 Yii::$app->getSession()->setFlash('info', 'Данные импортированы. Добавлено: '.
                         $inserted. ' Обновлено: '.$updated. ' Ошибок: '.$error);
                 fclose($handle);
-                unlink ($file);
+                unlink ($model->path);
             } else {
                 Yii::$app->getSession()->setFlash('error', Html::errorSummary($model));
             }
