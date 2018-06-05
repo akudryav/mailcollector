@@ -38,6 +38,7 @@ class Mailbox extends \yii\db\ActiveRecord
             ['is_deleted', 'default', 'value' => 0],
             [['email'], 'unique'],
             ['server_id', 'exist', 'targetClass' => Server::className(), 'targetAttribute' => 'id'],
+            ['vertical_id', 'filter', 'filter' => [Vertical::className(), 'processVertical']],
         ];
     }
 
@@ -54,6 +55,7 @@ class Mailbox extends \yii\db\ActiveRecord
             'buyer' => 'Buyer name', 
             'phone' => 'Телефон для подтверждений',
             'is_deleted' => 'Аккаунт блокирован',
+            'vertical_id' => 'Вертикаль',
             'last_message_uid' => 'Uid Последнего сообщения',
         ];
     }
@@ -98,6 +100,14 @@ class Mailbox extends \yii\db\ActiveRecord
     public function getServer()
     {
         return $this->hasOne(Server::className(), ['id' => 'server_id']);
+    }
+    
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getVertical()
+    {
+        return $this->hasOne(Vertical::className(), ['id' => 'vertical_id']);
     }
     
     /**

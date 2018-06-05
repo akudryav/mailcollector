@@ -34,6 +34,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     return $model->statusName();
                 }
             ],
+            'vertical.name',
             'last_message_uid',
 
             ['class' => 'yii\grid\ActionColumn'],

@@ -2,13 +2,17 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use yii\jui\AutoComplete;
+use app\models\Vertical;
 use app\models\Mailbox;
 use app\models\Server;
 use yii\helpers\ArrayHelper;
 
-/* @var $this yii\web\View */
-/* @var $model app\models\Mailbox */
-/* @var $form yii\widgets\ActiveForm */
+//фомируем список вертикалей
+$listdata=Vertical::find()
+    ->select(['id as value', 'name as label'])
+    ->asArray()
+    ->all();
 ?>
 
 <div class="mailbox-form">
@@ -22,6 +26,16 @@ use yii\helpers\ArrayHelper;
     <?= $form->field($model, 'buyer')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'phone')->textInput(['maxlength' => true]) ?>
+    
+    <?= $form->field($model, 'vertical_id')->widget(
+    AutoComplete::className(), [            
+        'clientOptions' => [
+            'source' => $listdata,
+        ],
+        'options'=>[
+            'class'=>'form-control'
+        ]
+    ]) ?>
 
     <?= $form->field($model, 'is_deleted')->dropDownList(Mailbox::$yes_no) ?>
 

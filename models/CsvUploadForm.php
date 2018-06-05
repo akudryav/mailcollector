@@ -10,12 +10,15 @@ use yii\base\Model;
 class CsvUploadForm extends Model
 {
     public $csvFile;
+    public $vertical;
     public $path;
 
     public function rules()
     {
         return [
-            [['csvFile'], 'file', 'checkExtensionByMimeType' => false, 'extensions' => 'csv'],
+            [['csvFile'], 'file', 'skipOnEmpty' => false, 
+                'checkExtensionByMimeType' => false, 'extensions' => 'csv'],
+            [['vertical'], 'string', 'max' => 255],
         ];
     }
     

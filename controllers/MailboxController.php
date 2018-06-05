@@ -6,6 +6,7 @@ use Yii;
 use yii\helpers\Html;
 use app\models\Mailbox;
 use app\models\MailboxSearch;
+use app\models\Vertical;
 use app\models\CsvUploadForm;
 use yii\web\UploadedFile;
 use app\components\AdminController;
@@ -61,6 +62,9 @@ class MailboxController extends AdminController
                     $boxmodel->password=$data[1];
                     $boxmodel->buyer = isset($data[2]) ? $data[2] : null;
                     $boxmodel->phone = isset($data[3]) ? $data[3] : null;
+                    // при указании вертикали
+                    $boxmodel->vertical_id = Yii::$app->request->post('CsvUploadForm')['vertical'];
+                    
                     if(!$boxmodel->save()){
                         Yii::$app->getSession()->setFlash('warning', 'Строка '.$row. Html::errorSummary($boxmodel));
                         $error ++;
@@ -101,7 +105,7 @@ class MailboxController extends AdminController
     {
         $model = new Mailbox();
         $model->is_deleted = 0;
-
+        
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
             return $this->redirect(['view', 'id' => $model->id]);
