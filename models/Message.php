@@ -90,6 +90,12 @@ class Message extends \yii\db\ActiveRecord
     {
         return $this->mbox;
     }
+
+    //получение поля объекта если есть
+    public static function getField($object, $field)
+    {
+        return isset($object->$field) ? $object->$field : null;
+    }
     
     //получение данных письма
     public function loadData()
@@ -105,8 +111,8 @@ class Message extends \yii\db\ActiveRecord
         $header = imap_rfc822_parse_headers($this->header);
         // хост отправителя
         $this->from_domain = $header->sender[0]->host;
-        $this->subject = self::getDecodedHeader($header->subject);
-        $this->message_date = self::strToMysqlDate($header->date);
+        $this->subject = self::getDecodedHeader(self::getField($header, 'subject'));
+        $this->message_date = self::strToMysqlDate(self::getField($header, 'date'));
         $this->body_text = $this->getTextBody();
         $this->body_html = $this->getHtmlBody();
         $this->modify_date = date("Y-m-d H:i:s");
@@ -115,6 +121,7 @@ class Message extends \yii\db\ActiveRecord
 
     //раскодировка заголовка
     public static function getDecodedHeader($text){
+        if(null == $text) return null;
         //imap_mime_header_decode - декодирует элементы MIME-шапки в виде массива
         //У каждого элемента указана кодировка(charset) и сам текст(text)
         $elements = imap_mime_header_decode($text);
@@ -230,6 +237,7 @@ class Message extends \yii\db\ActiveRecord
     //перевести текст в дату MySQL
     private static function strToMysqlDate($text)
     {
+        if(null == $text) return null;
         $unixTimestamp=strtotime($text);
         return date("Y-m-d H:i:s", $unixTimestamp);
     }
@@ -260,7 +268,7 @@ class Message extends \yii\db\ActiveRecord
                 $model->setAttributes([
                     'message_id' => $this->id,
                     'type' => $type,
-                    'name' => self::getDecodedHeader($obj->personal),
+                    'name' => self::getDecodedHeader(self::getField($obj,'personal')),
                     'email' => $address,
                 ]);
                 if (!$model->save()) {
@@ -277,7 +285,7 @@ class Message extends \yii\db\ActiveRecord
         //получаем структуру сообщения
         $struct = imap_fetchstructure($this->mbox, $this->uid,FT_UID);
         $attachCount = 0;
-        if(!$struct->parts) return $attachCount;
+        if(empty($struct->parts)) return $attachCount;
         //перебираем части сообщения
         foreach($struct->parts as $number => $part){
             //ищем части, у которых ifdisposition равно 1 и disposition равно ATTACHMENT,
