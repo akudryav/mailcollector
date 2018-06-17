@@ -4,13 +4,18 @@ namespace app\controllers;
 
 use Yii;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use app\models\Mailbox;
+use app\models\Token;
 use app\models\MailboxSearch;
-use app\models\Vertical;
 use app\models\CsvUploadForm;
+use app\models\JsonUploadForm;
 use yii\web\UploadedFile;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
+
+use google\apiclient;
+set_include_path(Yii::$app->BasePath  . '/vendor/google/apiclient/src');
 
 /**
  * MailboxController implements the CRUD actions for Mailbox model.
@@ -31,7 +36,57 @@ class MailboxController extends AdminController
             'dataProvider' => $dataProvider,
             'searchModel' => $searchModel,
             'csv' => new CsvUploadForm(),
+            'json' => new JsonUploadForm(),
         ]);
+    }
+
+    public function actionTest($id)
+    {
+        //$model = $this->findModel($id);
+        $cred = Token::findOne(['mailbox_id' => $id]);
+        $json = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $cred->credfile;
+
+        $client = new \Google_Client();
+        $client->setAuthConfig($json);
+        $client->addScope(\Google_Service_Drive::DRIVE);
+        // Your redirect URI can be any registered URI, but in this example
+        // we redirect back to this same page
+        $redirect_uri = Url::base(true).Url::current();
+        $client->setRedirectUri($redirect_uri);
+        var_dump($client);
+        if (isset($_GET['code'])) {
+            $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
+            var_dump($token);
+        }
+    }
+    /**
+     * Загрузка json
+     */
+    public function actionCredential($id)
+    {
+        $token = Token::findOne(['mailbox_id' => $id]);
+        if ($token == null) {
+            $token = new Token();
+            $token->mailbox_id = $id;
+        } else {
+            $oldfile = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->credfile;
+        }
+
+        if (Yii::$app->request->isPost) {
+            // загружаем файл
+            $model = new JsonUploadForm();
+            $model->jsonFile = UploadedFile::getInstance($model, 'jsonFile');
+            if ($model->upload()) {
+                Yii::$app->getSession()->setFlash('info', 'Загружен '.$model->jsonFile->name);
+                $token->credfile = $model->jsonFile->name;
+                if($token->save() && isset($oldfile) && basename($oldfile) != $token->credfile  && is_file($oldfile)) {
+                    // удаляем старый файл
+                    unlink($oldfile);
+                }
+            }
+        }
+
+        return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
     }
     /**
     * Загрузка данных из  csv

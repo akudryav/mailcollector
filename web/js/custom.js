@@ -1,11 +1,13 @@
 $(document).ready(function () {
-    // селектор типа ящика
-    $("#mailbox-server_id").on("change", function(){
-       $.get( "/server/data?id="+$(this).val(), function( data ) {
-            $( "#mailbox-host" ).val( data.host );
-            $( "#mailbox-port" ).val( data.port );
-            $( "#mailbox-is_ssl" ).val( data.is_ssl );
-          });
+    // Обработчик выбора json файла
+    $('#credential-form input[type="file"]').change(function() {
+        $('#credential-form').submit();
+        $('#myModal').modal('hide');
+    });
+
+    // Подготовка модального окна удаления комментария
+    $('#myModal').on('show.bs.modal', function(e) {
+        $('#credential-form').attr("action", $(e.relatedTarget).attr("href"));
     });
     // кнопка csv импорта
     $("#csv_button").on("click", function(){

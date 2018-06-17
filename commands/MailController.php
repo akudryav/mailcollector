@@ -98,77 +98,66 @@ class MailController extends Controller
                 Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
                 continue;//переходим к следующему ящику
             }
-            try {
-                //отключаем Autocommit, будем сами управлять транзакциями
-                $transaction = Mailbox::getDb()->beginTransaction();
-                
-                /*
-                Считываем только письма, у которых UID больше,
-                чем UID последнего считанного сообщения. Для этого воспользуемся
-                функцией imap_fetch_overview, у которой первый параметр - IMAP поток,
-                второй параметр - диапазон номеров и третий параметр - константа FT_UID.
-                FT_UID говорит о том, что диапазоны задаются UID-ами, иначе порядковыми
-                номерами сообщений. Здесь важно понять разницу.
-                Порядковый номер письма показывает номер писема среди писем почтового ящика,
-                но если кол-во писем уменьшить, то порядковый номер может измениться.
-                UID письма - это уникальный номер письма, также присваивается по порядку,
-                но не изменяется.
 
-                Сейчас и в дальнейшем мы же будем полагаться только на UID писем.
-                Диапазаны можно задать следующим образом:
-                "2,4:6" - что соответствует UID-ам 2,4,5,6
-                "7:10" - соответствует 7,8,9,10
-                В нашем случае для удобста будем брать диапазон от последнего UID + 1
-                и до 2147483647.
-                         */
-                $uid_from = $account->last_message_uid + 1;
-                $uid_to = 2147483647;
-                $range = "$uid_from:$uid_to";
-                $arr = imap_fetch_overview($mail, $range, FT_UID);
-                $message_uid = -1;
-                $msg_count = 0;
-                //перебираем сообщения
-                foreach ($arr as $obj) {
-                    //получаем UID сообщения
-                    $message_uid = $obj->uid;
-                    Yii::info("add message $message_uid", 'mailer');
+            /*
+            Считываем только письма, у которых UID больше,
+            чем UID последнего считанного сообщения. Для этого воспользуемся
+            функцией imap_fetch_overview, у которой первый параметр - IMAP поток,
+            второй параметр - диапазон номеров и третий параметр - константа FT_UID.
+            FT_UID говорит о том, что диапазоны задаются UID-ами, иначе порядковыми
+            номерами сообщений. Здесь важно понять разницу.
+            Порядковый номер письма показывает номер писема среди писем почтового ящика,
+            но если кол-во писем уменьшить, то порядковый номер может измениться.
+            UID письма - это уникальный номер письма, также присваивается по порядку,
+            но не изменяется.
 
-                    //создаем запись в таблице messages,
-                    //тем самым поставив сообщение в очередь на загрузку
-                    $model = new Message();
-                    $model->setAttributes([
-                        'mailbox_id' => $account->id,
-                        'uid' => $message_uid,
-                        'create_date' => date("Y-m-d H:i:s"),
-                        'is_ready' => 0
-                    ]);
-                    if (!$model->save()) {
-                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
-                    } else {
-                        $msg_count ++;
-                    }
-                }
-                if ($message_uid != -1) {
-                    Yii::info("last message uid = $message_uid", 'mailer');
+            Сейчас и в дальнейшем мы же будем полагаться только на UID писем.
+            Диапазаны можно задать следующим образом:
+            "2,4:6" - что соответствует UID-ам 2,4,5,6
+            "7:10" - соответствует 7,8,9,10
+            В нашем случае для удобста будем брать диапазон от последнего UID + 1
+            и до 2147483647.
+                     */
+            $uid_from = $account->last_message_uid + 1;
+            $uid_to = 2147483647;
+            $range = "$uid_from:$uid_to";
+            $arr = imap_fetch_overview($mail, $range, FT_UID);
+            $message_uid = -1;
+            $msg_count = 0;
+            //перебираем сообщения
+            foreach ($arr as $obj) {
+                //получаем UID сообщения
+                $message_uid = $obj->uid;
+                Yii::info("add message $message_uid", 'mailer');
 
-                    //если появились новые сообщения, 
-                    //то сохраняем UID последнего сообщения
-                    $account->last_message_uid = $message_uid;
-                    $account->save();
+                //создаем запись в таблице messages,
+                //тем самым поставив сообщение в очередь на загрузку
+                $model = new Message();
+                $model->setAttributes([
+                    'mailbox_id' => $account->id,
+                    'uid' => $message_uid,
+                    'create_date' => date("Y-m-d H:i:s"),
+                    'is_ready' => 0
+                ]);
+                if (!$model->save()) {
+                    Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
                 } else {
-                    //нет новых сообщений
-                    Yii::info('no new messages', 'mailer');
+                    $msg_count ++;
                 }
-                echo 'New messages: '.$msg_count. PHP_EOL;
-
-            } catch (\Exception $e) {
-                $transaction->rollBack();
-                throw $e;
-            } catch (\Throwable $e) {
-                $transaction->rollBack();
-                throw $e;
             }
-            $transaction->commit();
+            if ($message_uid != -1) {
+                Yii::info("last message uid = $message_uid", 'mailer');
+
+                //если появились новые сообщения,
+                //то сохраняем UID последнего сообщения
+                $account->last_message_uid = $message_uid;
+                $account->save();
+            } else {
+                //нет новых сообщений
+                Yii::info('no new messages', 'mailer');
+            }
+            echo 'New messages: '.$msg_count. PHP_EOL;
+
             //закрываем IMAP-поток
             imap_close($mail);
         }

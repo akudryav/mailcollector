@@ -124,4 +124,12 @@ class Mailbox extends \yii\db\ActiveRecord
         ->all();
         return ArrayHelper::getColumn($array, 'id');
     }
+
+    public function needCredential()
+    {
+        if($this->server->host != 'gmail.com') return false;
+        $token = Token::findOne(['mailbox_id' => $this->id]);
+        if ($token == null) return true;
+        return !is_file(Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->credfile);
+    }
 }

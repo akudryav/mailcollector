@@ -2,6 +2,8 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
+use yii\bootstrap\Modal;
+use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ActiveDataProvider */
@@ -37,7 +39,32 @@ $this->params['breadcrumbs'][] = $this->title;
             'vertical.name',
             'last_message_uid',
 
-            ['class' => 'yii\grid\ActionColumn'],
+            [
+                'class' => 'yii\grid\ActionColumn',
+                'header'=>'Действия',
+                'headerOptions' => ['width' => '130'],
+                'template' => '{credential} {view} {update} {delete}',
+                'buttons'=>
+                    [
+                        'credential' => function ($url, $model, $key) {
+                            return $model->needCredential() ? Html::a('<span class="glyphicon glyphicon-upload"></span>', $url,
+                                ['title' => 'Credentials', 'class' => 'danger', 'data-pjax' => '0',
+                                    'data-target'=>'#myModal','data-toggle'=>'modal']) : false;
+                        }
+                    ],
+            ]
         ],
     ]); ?>
+<?php
+    Modal::begin([
+        'header' => '<h2>Укажите json файл креденшиалс</h2>',
+        'id'=>'myModal'
+    ]);
+    $form = ActiveForm::begin(['id' => 'credential-form', 'options' => ['enctype' => 'multipart/form-data']]);
+    echo $form->field($json, 'jsonFile')->fileInput();
+
+    ActiveForm::end();
+
+    Modal::end();
+?>
 </div>

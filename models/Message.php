@@ -182,6 +182,10 @@ class Message extends \yii\db\ActiveRecord
                         //imap_8bit 
                         $text = imap_8bit($text);
                         break;
+                    case 2:
+                        //imap_binary
+                        $text = imap_binary($text);
+                        break;
                     case 3:
                         //imap_base64 - декодирует BASE64-кодированный текст
                         $text = imap_base64($text);

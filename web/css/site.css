@@ -116,3 +116,7 @@ a.desc:after {
 #csvform {
     display: none;
 }
+td .glyphicon {
+    margin: 0 3px;
+}
+.danger { color: #f00; }
