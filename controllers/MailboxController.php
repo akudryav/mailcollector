@@ -42,7 +42,8 @@ class MailboxController extends AdminController
 
     public function actionTest($id)
     {
-        //$model = $this->findModel($id);
+        
+        $token = false;
         $cred = Token::findOne(['mailbox_id' => $id]);
         $json = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $cred->credfile;
 
@@ -53,11 +54,14 @@ class MailboxController extends AdminController
         // we redirect back to this same page
         $redirect_uri = Url::base(true).Url::current();
         $client->setRedirectUri($redirect_uri);
-        var_dump($client);
-        if (isset($_GET['code'])) {
+        if (!isset($_GET['code'])) {
+            return $this->redirect($client->createAuthUrl());
+        } else {
             $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
-            var_dump($token);
         }
+        return $this->render('test', [
+            'token' => $token,
+        ]);
     }
     /**
      * Загрузка json
