@@ -40,11 +40,14 @@ class MailboxController extends AdminController
 
     public function actionToken($id)
     {
-        $request = Yii::$app->request;
-        $cred = Token::findOne(['mailbox_id' => $id]);
-        $client = $cred->getClient();
         $accessToken = false;
         $data = [];
+        $request = Yii::$app->request;
+        $cred = Token::findOne(['mailbox_id' => $id]);
+
+        $client = $cred->getClient();
+
+
         // если получаем через форму
         if ($request->isPost) {
             $authCode = $request->post('authCode');
@@ -59,7 +62,12 @@ class MailboxController extends AdminController
                 $accessToken = json_decode($cred->access_token, true);
             } else {
                 // Request authorization from the user.
-                $data['authUrl'] = $client->createAuthUrl();
+                try {
+                    $data['authUrl'] = $client->createAuthUrl();
+                } catch (\InvalidArgumentException $e) {
+                    $data['wrongCred'] = true;
+                    $data['id'] = $cred->id;
+                }
             }
         }
                 

@@ -12,7 +12,7 @@ use yii\widgets\ActiveForm;
 
     <?php $form = ActiveForm::begin(['options' => ['enctype' => 'multipart/form-data']]); ?>
 
-    <?= $form->field($model, 'access_token')->textarea(['rows' => '2']) ?>
+    <?= $model->access_token ?>
 
     <?= $form->field($model, 'secret_file')->fileInput(); ?>
 

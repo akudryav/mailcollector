@@ -81,8 +81,6 @@ class TokenController extends AdminController
 
         if ($request->isPost) {
             $oldfile = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $model->secret_file;
-            $data = $request->post();
-            $model->access_token = $data['Token']['access_token'];
             $newfile = UploadedFile::getInstance($model, 'secret_file');
             if(!empty($newfile)) {
                 $model->secret_file = $newfile;

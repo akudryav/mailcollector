@@ -132,7 +132,7 @@ class Mailbox extends \yii\db\ActiveRecord
         $token = Token::findOne(['mailbox_id' => $this->id]);
         if ($token == null || !is_file(Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->secret_file)) {
             return Html::a('<span class="glyphicon glyphicon-upload"></span>', $url, [
-                'title' => 'Загрузить secret_json', 
+                'title' => 'Загрузить креденшиалс',
                 'class' => 'danger', 
                 'data-pjax' => '0',
                 'data-target'=>'#myModal',
@@ -140,10 +140,12 @@ class Mailbox extends \yii\db\ActiveRecord
                 ]);
         }
         if(empty($token->access_token)) {
-            return Html::a('<span class="glyphicon glyphicon-upload"></span>', $url, [
+            return Html::a('<span class="glyphicon glyphicon-text-width"></span>', ['mailbox/token', 'id' => $this->id], [
                 'title' => 'Получить токен', 
                 ]);
         }
-        return !is_file(Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->secret_file);
+        return Html::a('<span class="glyphicon glyphicon-edit"></span>', ['token/update', 'id' => $token->id], [
+            'title' => 'Редактировать креденшиалс',
+        ]);
     }
 }

@@ -48,7 +48,7 @@ class Token extends \yii\db\ActiveRecord
             'id' => 'ID',
             'mailbox_id' => 'Почтовый аккаунт',
             'access_token' => 'Токен доступа',
-            'secret_file' => 'Идентификатор клиента гугл в json файле',
+            'secret_file' => 'Идентификатор клиента OAuth 2.0 (json файл)',
         ];
     }
 

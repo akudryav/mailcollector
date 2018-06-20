@@ -6,32 +6,33 @@ use yii\helpers\Html;
 /* @var $this yii\web\View */
 /* @var $model app\models\Mailbox */
 
-$this->title = 'Test Oauth';
+$this->title = 'Получение Oauth токена';
 $this->params['breadcrumbs'][] = ['label' => 'Mailboxes', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="mailbox-view">
 
-    <?php 
-    if(!empty($results)) {
-        if (count($results->getLabels()) == 0) {
-            print "No labels found.\n";
-        } else {
-          print "Labels:\n";
-          foreach ($results->getLabels() as $label) {
-            printf("- %s\n", $label->getName());
-          }
-        }
-    }
-    
+    <?php
     if(!empty($authUrl)) {
-        echo Html::a('Перейдите по ссылке', $authUrl, ['target'=>'_blank']);
-        echo 'И введите полученный код в поле ниже';
+        echo Html::a('Перейдите по ссылке <span class="glyphicon glyphicon-new-window"></span>', $authUrl, ['target'=>'_blank']);
+        echo '<br>И введите полученный код в поле ниже';
         echo Html::beginForm();
         echo Html::input('text', 'authCode'); 
         echo Html::submitButton('Отправить', ['class' => 'submit']);
         echo Html::endForm();
     }
+
+    if(!empty($wrongCred)) {
+        echo 'Используются некорректный Идентификатор клиентов OAuth 2.0<br>';
+        echo 'Необходимо использовать тип "Другие типы"<br>';
+        echo 'Обновить файл Идентификатора можно по '.
+            Html::a('Ссылке', ['token/update', 'id' => $id], [
+                'title' => 'Редактировать креденшиалс',
+            ]);
+
+    }
+
+    echo Html::a('Вернуться к списку аккаунтов', ['mailbox/index']);
     ?>
 
 </div>

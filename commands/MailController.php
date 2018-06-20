@@ -8,6 +8,7 @@ use yii\console\Controller;
 use yii\console\ExitCode;
 use app\models\Mailbox;
 use app\models\Message;
+use app\components\MailHelper;
 
 /**
  *предполагается, что данный скрипт будет запускаться планировщиком
@@ -59,27 +60,7 @@ class MailController extends Controller
     
     private function connectImap($account)
     {
-        // получаем данные почтового сервера
-        $server = $account->server;
-        //если подключение идет через SSL, 
-        //то достаточно добавить "/ssl" к строке подключения, и
-        //поддержка SSL будет включена
-        $ssl = $server->is_ssl ? "/ssl" : "";
 
-        //строка подключения
-        $conn = "{{$server->imap}:{$server->port}{$ssl}}";
-        Yii::info("Read {$account->email}, conn = $conn", 'mailer');
-        echo "Read {$account->email}, conn = $conn ";
-
-        //открываем IMAP-поток
-        $imap = @imap_open($conn, $account->email, $account->password);
-        $errors = imap_errors();
-        $alerts = imap_alerts();
-        // выводим ошибки
-        if(!empty($errors)) {
-            echo $errors[0].PHP_EOL;
-        }
-        return $imap;
     }
 
     /**
@@ -91,9 +72,10 @@ class MailController extends Controller
         if (!$fp) return ExitCode::CANTCREAT;
 
         foreach (Mailbox::find()->where(['is_deleted' => 0])->all() as $account) {
-            $mail = $this->connectImap($account);
+            $mail = MailHelper::makeConnection($account);
+            echo "Read {$account->email}";
             
-            if (!$mail) {
+            if (!$mail->checkConnection()) {
                 //пишем влог сообщение о неудачной попытке подключения
                 Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
                 continue;//переходим к следующему ящику
@@ -121,11 +103,10 @@ class MailController extends Controller
             $uid_from = $account->last_message_uid + 1;
             $uid_to = 2147483647;
             $range = "$uid_from:$uid_to";
-            $arr = imap_fetch_overview($mail, $range, FT_UID);
             $message_uid = -1;
             $msg_count = 0;
             //перебираем сообщения
-            foreach ($arr as $obj) {
+            foreach ($mail->getMessages($range) as $obj) {
                 //получаем UID сообщения
                 $message_uid = $obj->uid;
                 Yii::info("add message $message_uid", 'mailer');
@@ -159,7 +140,7 @@ class MailController extends Controller
             echo 'New messages: '.$msg_count. PHP_EOL;
 
             //закрываем IMAP-поток
-            imap_close($mail);
+            $mail->disconnect();
         }
 
         // удаляем блокировку
