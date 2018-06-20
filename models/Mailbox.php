@@ -4,6 +4,7 @@ namespace app\models;
 
 use Yii;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
 /**
  * This is the model class for table "mailbox".
  *
@@ -125,11 +126,24 @@ class Mailbox extends \yii\db\ActiveRecord
         return ArrayHelper::getColumn($array, 'id');
     }
 
-    public function needCredential()
+    public function tokenUrl($url)
     {
         if($this->server->host != 'gmail.com') return false;
         $token = Token::findOne(['mailbox_id' => $this->id]);
-        if ($token == null) return true;
+        if ($token == null || !is_file(Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->secret_file)) {
+            return Html::a('<span class="glyphicon glyphicon-upload"></span>', $url, [
+                'title' => 'Загрузить secret_json', 
+                'class' => 'danger', 
+                'data-pjax' => '0',
+                'data-target'=>'#myModal',
+                'data-toggle'=>'modal'
+                ]);
+        }
+        if(empty($token->access_token)) {
+            return Html::a('<span class="glyphicon glyphicon-upload"></span>', $url, [
+                'title' => 'Получить токен', 
+                ]);
+        }
         return !is_file(Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->secret_file);
     }
 }

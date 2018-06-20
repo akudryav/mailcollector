@@ -38,13 +38,11 @@ class MailboxController extends AdminController
         ]);
     }
 
-    public function actionTest($id, $code=null)
+    public function actionToken($id)
     {
         $request = Yii::$app->request;
         $cred = Token::findOne(['mailbox_id' => $id]);
         $client = $cred->getClient();
-        $redirect_uri = Url::base(true).Url::current();
-        $client->setRedirectUri($redirect_uri);
         $accessToken = false;
         $data = [];
         // если получаем через форму
@@ -54,7 +52,7 @@ class MailboxController extends AdminController
             $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
             $cred->access_token = json_encode($accessToken);
             if($cred->save()) {
-                Yii::$app->getSession()->setFlash('info', 'Credentials saved');
+                Yii::$app->getSession()->setFlash('info', 'Oauth Токен создан');
             }
         } else {
             if (!empty($cred->access_token)) {
@@ -64,11 +62,7 @@ class MailboxController extends AdminController
                 $data['authUrl'] = $client->createAuthUrl();
             }
         }
-        // если получаем с редиректа
-        if (isset($code)) {
-            $accessToken = $client->fetchAccessTokenWithAuthCode($code);
-        }
-        
+                
         if($accessToken) {
             $client->setAccessToken($accessToken);
             // Refresh the token if it's expired.
@@ -76,16 +70,11 @@ class MailboxController extends AdminController
                 $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
                 $cred->access_token = json_encode($client->getAccessToken());
                 $cred->save();
+                Yii::$app->getSession()->setFlash('info', 'Oauth Токен обновлен');
             }
-
-            $service = new \Google_Service_Gmail($client);
-            // Print the labels in the user's account.
-            $user = 'me';
-            $data['results'] = $service->users_labels->listUsersLabels($user);
-           
         }
         
-        return $this->render('test', $data);
+        return $this->render('token', $data);
     }
     /**
      * Загрузка json
