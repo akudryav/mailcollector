@@ -30,8 +30,8 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => [
             'id',
             'mailbox_id',
-            'id_token',
-            'secret_token',
+            'access_token',
+            'secret_file',
         ],
     ]) ?>
 

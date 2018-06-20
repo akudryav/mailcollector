@@ -9,11 +9,9 @@ use app\models\Mailbox;
 use app\models\Token;
 use app\models\MailboxSearch;
 use app\models\CsvUploadForm;
-use app\models\JsonUploadForm;
 use yii\web\UploadedFile;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
-
 use google\apiclient;
 set_include_path(Yii::$app->BasePath  . '/vendor/google/apiclient/src');
 
@@ -36,32 +34,58 @@ class MailboxController extends AdminController
             'dataProvider' => $dataProvider,
             'searchModel' => $searchModel,
             'csv' => new CsvUploadForm(),
-            'json' => new JsonUploadForm(),
+            'json' => new Token(),
         ]);
     }
 
-    public function actionTest($id)
+    public function actionTest($id, $code=null)
     {
-        
-        $token = false;
+        $request = Yii::$app->request;
         $cred = Token::findOne(['mailbox_id' => $id]);
-        $json = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $cred->credfile;
-
-        $client = new \Google_Client();
-        $client->setAuthConfig($json);
-        $client->addScope(\Google_Service_Drive::DRIVE);
-        // Your redirect URI can be any registered URI, but in this example
-        // we redirect back to this same page
+        $client = $cred->getClient();
         $redirect_uri = Url::base(true).Url::current();
         $client->setRedirectUri($redirect_uri);
-        if (!isset($_GET['code'])) {
-            return $this->redirect($client->createAuthUrl());
+        $accessToken = false;
+        $data = [];
+        // если получаем через форму
+        if ($request->isPost) {
+            $authCode = $request->post('authCode');
+            // Exchange authorization code for an access token.
+            $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
+            $cred->access_token = json_encode($accessToken);
+            if($cred->save()) {
+                Yii::$app->getSession()->setFlash('info', 'Credentials saved');
+            }
         } else {
-            $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
+            if (!empty($cred->access_token)) {
+                $accessToken = json_decode($cred->access_token, true);
+            } else {
+                // Request authorization from the user.
+                $data['authUrl'] = $client->createAuthUrl();
+            }
         }
-        return $this->render('test', [
-            'token' => $token,
-        ]);
+        // если получаем с редиректа
+        if (isset($code)) {
+            $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+        }
+        
+        if($accessToken) {
+            $client->setAccessToken($accessToken);
+            // Refresh the token if it's expired.
+            if ($client->isAccessTokenExpired()) {
+                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+                $cred->access_token = json_encode($client->getAccessToken());
+                $cred->save();
+            }
+
+            $service = new \Google_Service_Gmail($client);
+            // Print the labels in the user's account.
+            $user = 'me';
+            $data['results'] = $service->users_labels->listUsersLabels($user);
+           
+        }
+        
+        return $this->render('test', $data);
     }
     /**
      * Загрузка json
@@ -73,17 +97,15 @@ class MailboxController extends AdminController
             $token = new Token();
             $token->mailbox_id = $id;
         } else {
-            $oldfile = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->credfile;
+            $oldfile = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->secret_file;
         }
 
         if (Yii::$app->request->isPost) {
             // загружаем файл
-            $model = new JsonUploadForm();
-            $model->jsonFile = UploadedFile::getInstance($model, 'jsonFile');
-            if ($model->upload()) {
-                Yii::$app->getSession()->setFlash('info', 'Загружен '.$model->jsonFile->name);
-                $token->credfile = $model->jsonFile->name;
-                if($token->save() && isset($oldfile) && basename($oldfile) != $token->credfile  && is_file($oldfile)) {
+            $token->secret_file = UploadedFile::getInstance($token, 'secret_file');
+            if ($token->upload()) {
+                Yii::$app->getSession()->setFlash('info', 'Загружен '.$token->secret_file->name);
+                if($token->save() && isset($oldfile) && basename($oldfile) != $token->secret_file  && is_file($oldfile)) {
                     // удаляем старый файл
                     unlink($oldfile);
                 }

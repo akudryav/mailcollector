@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
+use  yii\helpers\StringHelper;
 
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ActiveDataProvider */
@@ -23,8 +24,13 @@ $this->params['breadcrumbs'][] = $this->title;
 
             'id',
             'mailbox_id',
-            'id_token',
-            'secret_token',
+            [
+                'attribute' => 'access_token',
+                'value' => function ($model) {
+                    return StringHelper::truncate($model->access_token, 50);
+                },
+            ],
+            'secret_file',
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

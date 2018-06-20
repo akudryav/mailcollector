@@ -10,13 +10,11 @@ use yii\widgets\ActiveForm;
 
 <div class="token-form">
 
-    <?php $form = ActiveForm::begin(); ?>
+    <?php $form = ActiveForm::begin(['options' => ['enctype' => 'multipart/form-data']]); ?>
 
-    <?= $form->field($model, 'mailbox_id')->textInput() ?>
+    <?= $form->field($model, 'access_token')->textarea(['rows' => '2']) ?>
 
-    <?= $form->field($model, 'id_token')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'secret_token')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'secret_file')->fileInput(); ?>
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-success']) ?>

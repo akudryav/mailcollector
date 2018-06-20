@@ -47,16 +47,9 @@ $this->params['breadcrumbs'][] = $this->title;
                 'buttons'=>
                     [
                         'credential' => function ($url, $model, $key) {
-                            $options = [
-                                'title' => 'Credentials', 
-                                'data-pjax' => '0',
-                                'data-target'=>'#myModal',
-                                'data-toggle'=>'modal'
-                                ];
-                            if($model->needCredential()) {
-                                $options['class'] =  'danger';
-                            }
-                            return Html::a('<span class="glyphicon glyphicon-upload"></span>', $url, $options);
+                            return $model->needCredential() ? Html::a('<span class="glyphicon glyphicon-upload"></span>', $url,
+                                ['title' => 'Credentials', 'class' => 'danger', 'data-pjax' => '0',
+                                    'data-target'=>'#myModal','data-toggle'=>'modal']) : false;
                         }
                     ],
             ]
@@ -68,7 +61,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'id'=>'myModal'
     ]);
     $form = ActiveForm::begin(['id' => 'credential-form', 'options' => ['enctype' => 'multipart/form-data']]);
-    echo $form->field($json, 'jsonFile')->fileInput();
+    echo $form->field($json, 'secret_file')->fileInput();
 
     ActiveForm::end();
 

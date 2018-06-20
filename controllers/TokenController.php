@@ -5,6 +5,7 @@ namespace app\controllers;
 use Yii;
 use app\models\Token;
 use yii\data\ActiveDataProvider;
+use yii\web\UploadedFile;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
 
@@ -51,8 +52,14 @@ class TokenController extends AdminController
     {
         $model = new Token();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if (Yii::$app->request->isPost) {
+            $model->load(Yii::$app->request->post());
+            $model->secret_file = UploadedFile::getInstance($model, 'secret_file');
+
+            if ($model->upload() && $model->save()) {
+                Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
         return $this->render('create', [
@@ -70,9 +77,26 @@ class TokenController extends AdminController
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $request = Yii::$app->request;
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($request->isPost) {
+            $oldfile = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $model->secret_file;
+            $data = $request->post();
+            $model->access_token = $data['Token']['access_token'];
+            $newfile = UploadedFile::getInstance($model, 'secret_file');
+            if(!empty($newfile)) {
+                $model->secret_file = $newfile;
+                $model->upload();
+                if(basename($oldfile) != $newfile->name  && is_file($oldfile)){
+                    // удаляем старый файл
+                    unlink($oldfile);
+                }
+            }
+
+            if ($model->save()) {
+                Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
         return $this->render('update', [

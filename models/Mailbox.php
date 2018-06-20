@@ -130,6 +130,6 @@ class Mailbox extends \yii\db\ActiveRecord
         if($this->server->host != 'gmail.com') return false;
         $token = Token::findOne(['mailbox_id' => $this->id]);
         if ($token == null) return true;
-        return !is_file(Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->credfile);
+        return !is_file(Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->secret_file);
     }
 }
