@@ -69,4 +69,15 @@ class ImapConnection extends \yii\base\Component {
         $mail = $this->getImapStream();
         return imap_fetch_overview($mail, $range, FT_UID);
     }
+
+    public function getInfo()
+    {
+        $mail = $this->getImapStream();
+        return imap_check($mail);
+    }
+
+    public function getLastError()
+    {
+        return imap_last_error();
+    }
 }

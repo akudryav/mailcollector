@@ -3,56 +3,72 @@
 namespace app\components;
 
 use Yii;
+use app\models\Token;
+use google\apiclient;
 
 class GmailConnection extends \yii\base\Component {
-    private $imapPath;
-    private $imapLogin;
-    private $imapPassword;
-    private $imapStream;
+    private $mailbox_id;
+    private $email;
+    private $client;
+    private $credential;
+    private $service;
+    private $error;
 
-    /**
-     * Get IMAP mailbox connection stream
-     * @param bool $forceConnection Initialize connection if it's not initialized
-     * @return null|resource
-     */
-    protected function getImapStream()
+    public function setMailbox_id($value)
     {
-        if($this->imapStream && (!is_resource($this->imapStream) || !imap_ping($this->imapStream))) {
-            $this->disconnect();
-            $this->imapStream = null;
-        }
-        if(!$this->imapStream) {
-            $this->imapStream = $this->initImapStream();
-        }
-        return $this->imapStream;
+        $this->mailbox_id = $value;
     }
 
-    protected function initImapStream()
+    public function setEmail($value)
     {
-        $imapStream = @imap_open($this->imapPath, $this->imapLogin, $this->imapPassword);
-        if(!$imapStream) {
-            echo 'Connection error: ' . imap_last_error();
-        }
-        return $imapStream;
+        $this->email = $value;
     }
 
-    public function disconnect()
+    public function init()
     {
-        if($this->imapStream && is_resource($this->imapStream)) {
-            imap_close($this->imapStream, CL_EXPUNGE);
-            $this->imapStream = null;
+        $this->credential = Token::findOne(['mailbox_id' => $this->mailbox_id]);
+        $this->client = $this->credential->getClient();
+        if (!empty($this->credential->access_token)) {
+            $accessToken = json_decode($this->credential->access_token, true);
+        } else {
+            echo 'Необходимо создать Oauth токен для аккаунта '.$this->email;
+            return false;
         }
+        $this->client->setAccessToken($accessToken);
+        $this->refreshToken();
+        $this->service = new \Google_Service_Gmail($this->client);
     }
 
     public function checkConnection()
     {
-        $mail = $this->getImapStream();
-        return imap_ping($mail);
+        return is_a ( $this->service , 'Google_Service_Gmail');
     }
+
+    private function refreshToken()
+    {
+        // Refresh the token if it's expired.
+        if ($this->client->isAccessTokenExpired()) {
+            $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+            $this->credential->access_token = json_encode($this->client->getAccessToken());
+            $this->credential->save();
+        }
+    }
+    
+
+    public function disconnect()
+    {
+
+    }
+
 
     public function getMessages($range)
     {
-        $mail = $this->getImapStream();
-        return imap_fetch_overview($mail, $range, FT_UID);
+        $messages = $this->service->users_messages->listUsersMessages('me');
+        return $messages->getMessages();
+    }
+
+    public function getLastError()
+    {
+        return $this->error;
     }
 }

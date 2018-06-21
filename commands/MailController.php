@@ -75,9 +75,9 @@ class MailController extends Controller
             $mail = MailHelper::makeConnection($account);
             echo "Read {$account->email}";
             
-            if (!$mail->checkConnection()) {
+            if (!$mail || !$mail->checkConnection()) {
                 //пишем влог сообщение о неудачной попытке подключения
-                Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
+                Yii::error('Error opening Connection. ' . $mail->getLastError(), 'mailer');
                 continue;//переходим к следующему ящику
             }
 
@@ -106,7 +106,14 @@ class MailController extends Controller
             $message_uid = -1;
             $msg_count = 0;
             //перебираем сообщения
-            foreach ($mail->getMessages($range) as $obj) {
+            $messages = $mail->getMessages($range);
+            if('gmail.com' == $account->server->host) {
+                var_dump($messages);
+                echo $messages[0]->getId();
+            } else {
+                var_dump($mail->getInfo());
+            }
+            foreach ($messages as $obj) {
                 //получаем UID сообщения
                 $message_uid = $obj->uid;
                 Yii::info("add message $message_uid", 'mailer');
@@ -139,7 +146,7 @@ class MailController extends Controller
             }
             echo 'New messages: '.$msg_count. PHP_EOL;
 
-            //закрываем IMAP-поток
+            //закрываем поток
             $mail->disconnect();
         }
 

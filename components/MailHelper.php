@@ -1,17 +1,15 @@
 <?php
 namespace app\components;
 
-use app\models\MessageIMAP;
-use app\models\MessageGMAIL;
-
 class MailHelper {
 
     public static function makeConnection($account)
     {
         if('gmail.com' == $account->server->host) {
-            $cred = Token::findOne(['mailbox_id' => $account->id]);
-            $client = $cred->getClient();
-            return new GmailConnection($account);
+            return new GmailConnection([
+                'mailbox_id' => $account->id,
+                'email' => $account->email,
+            ]);
         } else {
             // получаем данные почтового сервера
             $server = $account->server;
