@@ -29,7 +29,7 @@ class ImapConnection extends \yii\base\Component {
      * @param bool $forceConnection Initialize connection if it's not initialized
      * @return null|resource
      */
-    protected function getImapStream()
+    public function getImapStream()
     {
         if($this->imapStream && (!is_resource($this->imapStream) || !imap_ping($this->imapStream))) {
             $this->disconnect();
@@ -41,7 +41,7 @@ class ImapConnection extends \yii\base\Component {
         return $this->imapStream;
     }
 
-    protected function initImapStream()
+    private function initImapStream()
     {
         $imapStream = @imap_open($this->imapPath, $this->imapLogin, $this->imapPassword);
         if(!$imapStream) {

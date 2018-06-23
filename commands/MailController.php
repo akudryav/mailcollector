@@ -2,6 +2,8 @@
 
 namespace app\commands;
 
+use app\models\MessageGMAIL;
+use app\models\MessageIMAP;
 use Yii;
 use yii\helpers\Html;
 use yii\console\Controller;
@@ -34,9 +36,9 @@ class MailController extends Controller
      * Если файл блокировки существует и удалось получить время последнего
      * изменения файла, то значит предыдущий скрипт был прерван
      */
-    private function makeLock()
+    private function makeLock($prefix=null)
     {
-        $lock_path = Yii::getAlias('@runtime') . DIRECTORY_SEPARATOR . $this->lock;
+        $lock_path = Yii::getAlias('@runtime') . DIRECTORY_SEPARATOR . $prefix. $this->lock;
         $aborted = file_exists($lock_path) ? filemtime($lock_path) : false;
         if ($aborted) { //если выполнение предыдущего скрипта было прервано
             Yii::info('Выполнение предыдущего скрипта было прервано', 'mailer'); //пишем в лог, что прервано
@@ -54,8 +56,10 @@ class MailController extends Controller
     {
         Yii::info('Закончили', 'mailer');
         flock($fp, LOCK_UN);//снимаем блокировку с файла
+        $meta_data = stream_get_meta_data($fp);
+        $filename = $meta_data["uri"];
         fclose($fp);//закрываем файл
-        unlink(Yii::getAlias('@runtime') . DIRECTORY_SEPARATOR . $this->lock);//удаляем файл
+        unlink($filename);//удаляем файл
     }
     
     private function connectImap($account)
@@ -64,14 +68,31 @@ class MailController extends Controller
     }
 
     /**
-     * чтение новых писем (без полной загрузки)
+     * Скачивание писем (полная загрузка) по IMAP
+     * Считываем только письма, у которых UID больше,
+    чем UID последнего считанного сообщения. Для этого воспользуемся
+    функцией imap_fetch_overview, у которой первый параметр - IMAP поток,
+    второй параметр - диапазон номеров и третий параметр - константа FT_UID.
+    FT_UID говорит о том, что диапазоны задаются UID-ами, иначе порядковыми
+    номерами сообщений. Здесь важно понять разницу.
+    Порядковый номер письма показывает номер писема среди писем почтового ящика,
+    но если кол-во писем уменьшить, то порядковый номер может измениться.
+    UID письма - это уникальный номер письма, также присваивается по порядку,
+    но не изменяется.
+
+    Сейчас и в дальнейшем мы же будем полагаться только на UID писем.
+    Диапазаны можно задать следующим образом:
+    "2,4:6" - что соответствует UID-ам 2,4,5,6
+    "7:10" - соответствует 7,8,9,10
+    В нашем случае для удобста будем брать диапазон от последнего UID + 1
+    и до 2147483647.
      */
-    public function actionRead()
+    public function actionLoadImap()
     {
-        $fp = $this->makeLock();
+        $fp = $this->makeLock('imap');
         if (!$fp) return ExitCode::CANTCREAT;
 
-        foreach (Mailbox::find()->where(['is_deleted' => 0])->all() as $account) {
+        foreach (Mailbox::getImap() as $account) {
             $mail = MailHelper::makeConnection($account);
             echo "Read {$account->email}";
             
@@ -81,57 +102,58 @@ class MailController extends Controller
                 continue;//переходим к следующему ящику
             }
 
-            /*
-            Считываем только письма, у которых UID больше,
-            чем UID последнего считанного сообщения. Для этого воспользуемся
-            функцией imap_fetch_overview, у которой первый параметр - IMAP поток,
-            второй параметр - диапазон номеров и третий параметр - константа FT_UID.
-            FT_UID говорит о том, что диапазоны задаются UID-ами, иначе порядковыми
-            номерами сообщений. Здесь важно понять разницу.
-            Порядковый номер письма показывает номер писема среди писем почтового ящика,
-            но если кол-во писем уменьшить, то порядковый номер может измениться.
-            UID письма - это уникальный номер письма, также присваивается по порядку,
-            но не изменяется.
-
-            Сейчас и в дальнейшем мы же будем полагаться только на UID писем.
-            Диапазаны можно задать следующим образом:
-            "2,4:6" - что соответствует UID-ам 2,4,5,6
-            "7:10" - соответствует 7,8,9,10
-            В нашем случае для удобста будем брать диапазон от последнего UID + 1
-            и до 2147483647.
-                     */
             $uid_from = $account->last_message_uid + 1;
             $uid_to = 2147483647;
             $range = "$uid_from:$uid_to";
             $message_uid = -1;
             $msg_count = 0;
             //перебираем сообщения
-            $messages = $mail->getMessages($range);
-            if('gmail.com' == $account->server->host) {
-                var_dump($messages);
-                echo $messages[0]->getId();
-            } else {
-                var_dump($mail->getInfo());
-            }
-            foreach ($messages as $obj) {
+            foreach ($mail->getMessages($range) as $message) {
                 //получаем UID сообщения
-                $message_uid = $obj->uid;
+                $message_uid = $message->uid;
                 Yii::info("add message $message_uid", 'mailer');
 
-                //создаем запись в таблице messages,
-                //тем самым поставив сообщение в очередь на загрузку
-                $model = new Message();
-                $model->setAttributes([
-                    'mailbox_id' => $account->id,
-                    'uid' => $message_uid,
-                    'create_date' => date("Y-m-d H:i:s"),
-                    'is_ready' => 0
-                ]);
-                if (!$model->save()) {
-                    Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
-                } else {
-                    $msg_count ++;
-                }
+                try {
+                    //отключаем Autocommit, будем сами управлять транзакциями
+                    $transaction = Mailbox::getDb()->beginTransaction();
+                    $model = new MessageIMAP();
+                    //создаем запись в таблице messages,
+                    $model->setAttributes([
+                        'mailbox_id' => $account->id,
+                        'uid' => $message_uid,
+                        'create_date' => date("Y-m-d H:i:s"),
+                        'is_ready' => 0
+                    ]);
+
+                    if (!$model->save()) {
+                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
+                    }
+
+                    Yii::info("loading message $message_uid", 'mailer');
+                    echo "loading message $message_uid" . PHP_EOL;
+                    $model->setMbox($mail->getImapStream());
+                    // загрузка данных
+                    $model->loadData();
+                    // загрузка адресов
+                    $model->loadAddress();
+                    // загрузка вложений
+                    $model->loadAttaches();
+
+                    if (!$model->save()) {
+                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
+                    } else {
+                        $msg_count ++;
+                    }
+
+                    } catch (\Exception $e) {
+                        $transaction->rollBack();
+                        throw $e;
+                    } catch (\Throwable $e) {
+                        $transaction->rollBack();
+                        throw $e;
+                    }
+                $transaction->commit();
+
             }
             if ($message_uid != -1) {
                 Yii::info("last message uid = $message_uid", 'mailer');
@@ -139,13 +161,13 @@ class MailController extends Controller
                 //если появились новые сообщения,
                 //то сохраняем UID последнего сообщения
                 $account->last_message_uid = $message_uid;
+                $account->check_time = time();
                 $account->save();
             } else {
                 //нет новых сообщений
                 Yii::info('no new messages', 'mailer');
             }
-            echo 'New messages: '.$msg_count. PHP_EOL;
-
+            echo 'Loaded messages: '.$msg_count. PHP_EOL;
             //закрываем поток
             $mail->disconnect();
         }
@@ -157,52 +179,82 @@ class MailController extends Controller
 
     }
      /**
-     * Скачивание писем (полная загрузка)
+     * Скачивание писем (полная загрузка) по GMAIL
      */
-    public function actionLoad()
+    public function actionLoadGmail()
     {
-        //составим список только тех почтовых ящиков,
-        //сообщения которых еще не скачаны
-        $ids = Mailbox::getUnloaded();
-        $fp = $this->makeLock();
+        $fp = $this->makeLock('gmail');
         if (!$fp) return ExitCode::CANTCREAT;
 
-        foreach (Mailbox::findAll($ids) as $account) {
-            $mail = $this->connectImap($account);
-            if (!$mail) {
+        foreach (Mailbox::getGmail() as $account) {
+            $mail = MailHelper::makeConnection($account);
+            echo "Read {$account->email}";
+
+            if (!$mail || !$mail->checkConnection()) {
                 //пишем влог сообщение о неудачной попытке подключения
-                Yii::error('Error opening IMAP. ' . imap_last_error(), 'mailer');
+                Yii::error('Error opening Connection. ' . $mail->getLastError(), 'mailer');
                 continue;//переходим к следующему ящику
             }
-            //получаем список сообщений, которые необходимо скачать с почтового ящика
-            foreach ($account->getMessages()->where(['is_ready' => 0])->all() as $message){
+            $msg_count = 0;
+            //перебираем сообщения
+            $optParams['labelIds'] = 'INBOX';
+            foreach ($mail->getMessages($optParams) as $message) {
                 try {
+                    $full_id = $message->getId();
                     //отключаем Autocommit, будем сами управлять транзакциями
-                    $transaction = Mailbox::getDb()->beginTransaction();
-                    Yii::info("load message {$message->uid}", 'mailer');
-                    echo "load message {$message->uid}" . PHP_EOL;
-                    $message->setMbox($mail);
+                    //$transaction = Mailbox::getDb()->beginTransaction();
+                    $model = new MessageGMAIL();
+                    // Проверяем наличие сообщения в БД
+                    if($model->findByFullid($full_id)) {
+                        continue;
+                    }
+                    //создаем запись в таблице messages,
+                    $model->setAttributes([
+                        'mailbox_id' => $account->id,
+                        'uid' => 1,
+                        'full_id' => $full_id,
+                        'create_date' => date("Y-m-d H:i:s"),
+                        'is_ready' => 0
+                    ]);
+
+                    if (!$model->save()) {
+                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
+                    }
+
+                    Yii::info("loading message $full_id", 'mailer');
+                    echo "loading message $full_id" . PHP_EOL;
+                    $model->setMbox($mail->getService());
                     // загрузка данных
-                    $message->loadData();
-                    // загрузка адресов
-                    $message->loadAddress();
+                    $model->loadData();
                     // загрузка вложений
-                    $message->loadAttaches();
-                    if (!$message->save()) {
-                        Yii::error('Error save message. ' . Html::errorSummary($message), 'mailer');
+                    $model->loadAttaches();
+
+                    if (!$model->save()) {
+                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
+                    } else {
+                        $msg_count ++;
                     }
 
                 } catch (\Exception $e) {
-                    $transaction->rollBack();
+                    //$transaction->rollBack();
                     throw $e;
                 } catch (\Throwable $e) {
-                    $transaction->rollBack();
+                    //$transaction->rollBack();
                     throw $e;
                 }
-                $transaction->commit();
+                //$transaction->commit();
+
             }
-            //закрываем IMAP-поток
-            imap_close($mail);
+            if ($msg_count > 0) {
+                $account->check_time = time();
+                $account->save();
+            } else {
+                //нет новых сообщений
+                Yii::info('no new messages', 'mailer');
+            }
+            echo 'Loaded messages: '.$msg_count. PHP_EOL;
+            //закрываем поток
+            $mail->disconnect();
         }
 
         // удаляем блокировку

@@ -46,7 +46,7 @@ class Message extends \yii\db\ActiveRecord
         return [
             [['mailbox_id', 'uid'], 'required'],
             [['mailbox_id', 'uid', 'attachment_count', 'is_ready'], 'integer'],
-            [['body_text', 'body_html', 'header'], 'string'],
+            [['body_text', 'body_html', 'header', 'full_id'], 'string'],
             [['message_date', 'create_date', 'modify_date'], 'safe'],
             [['from_ip', 'from_domain', 'subject'], 'string', 'max' => 255],
             [['mailbox_id'], 'exist', 'skipOnError' => true, 'targetClass' => Mailbox::className(), 'targetAttribute' => ['mailbox_id' => 'id']],
@@ -62,6 +62,7 @@ class Message extends \yii\db\ActiveRecord
             'id' => 'ID',
             'mailbox_id' => 'Почтовый Аккаунт',
             'uid' => 'Uid',
+            'full_id' => 'Полный ID сообщения',
             'from_ip' => 'Ip отправителя',
             'from_domain' => 'Домен отправителя',
             'subject' => 'Тема',
@@ -79,25 +80,6 @@ class Message extends \yii\db\ActiveRecord
     public function statusName()
     {
         return isset(self::$yes_no[$this->is_ready]) ? self::$yes_no[$this->is_ready] : 'unknown';
-    }
-
-    //Функция для получения пути к директории, где будут храниться файлы.
-    //Файлы будут сохраняться в поддиректории, созданной по
-    //текущей дате. Например, 2014-07-31. Это позволит
-    //не держать файлы в одной директории. Много файлов в
-    //одной директории замедляет чтение директории
-    private static function getStoreDirectory()
-    {
-        $date_folder = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . date('Y-m-d') . DIRECTORY_SEPARATOR;
-        if(!file_exists($date_folder)) mkdir($date_folder);
-        return $date_folder;
-    }
-
-    //получаем расширение файла
-    private static function getFileExtension($filename)
-    {
-        $arr = explode(".",$filename);
-        return count($arr) > 1 ? "." . end($arr) : "";
     }
     
     public function showAttachments()

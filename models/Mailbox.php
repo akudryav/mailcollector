@@ -112,18 +112,27 @@ class Mailbox extends \yii\db\ActiveRecord
     }
     
     /**
-     * получение списка ящиков по которым есть незагруженные письма
+     * получение списка ящиков для протокола IMAP
      */
-    public static function getUnloaded()
+    public static function getImap()
     {
-        $array = self::find()
-        ->select(['mailbox.id'])
-        ->joinWith('messages', false)
-        ->where(['message.is_ready' => 0, 'mailbox.is_deleted' => 0])
-        ->groupBy(['mailbox.id'])
-        ->asArray()
+        return self::find()
+        ->joinWith('server', false)
+        ->where(['is_deleted' => 0])
+        ->andWhere(['<>','server.host', 'gmail.com'])
         ->all();
-        return ArrayHelper::getColumn($array, 'id');
+    }
+
+    /**
+     * получение списка ящиков для протокола GMAIL
+     */
+    public static function getGmail()
+    {
+        return self::find()
+            ->joinWith('server', false)
+            ->where(['is_deleted' => 0])
+            ->andWhere(['server.host' => 'gmail.com'])
+            ->all();
     }
 
     public function tokenUrl($url)

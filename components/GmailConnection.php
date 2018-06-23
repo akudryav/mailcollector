@@ -24,6 +24,11 @@ class GmailConnection extends \yii\base\Component {
         $this->email = $value;
     }
 
+    public function getService()
+    {
+        return $this->service;
+    }
+
     public function init()
     {
         $this->credential = Token::findOne(['mailbox_id' => $this->mailbox_id]);
@@ -60,15 +65,38 @@ class GmailConnection extends \yii\base\Component {
 
     }
 
-
-    public function getMessages($range)
-    {
-        $messages = $this->service->users_messages->listUsersMessages('me');
-        return $messages->getMessages();
-    }
-
     public function getLastError()
     {
         return $this->error;
     }
+
+    /**
+     * Get list of Messages in user mailbox.
+     *
+     * @param  Google_Service_Gmail $service Authorized Gmail API instance.
+     * can be used to indicate the authenticated user.
+     * @return array Array of Messages.
+     */
+    public function getMessages($optArr = [])
+    {
+        $pageToken = NULL;
+        $messages = [];
+        do {
+            try {
+                if ($pageToken) {
+                    $optArr['pageToken'] = $pageToken;
+                }
+                $messagesResponse = $this->service->users_messages->listUsersMessages('me', $optArr);
+                if ($messagesResponse->getMessages()) {
+                    $messages = array_merge($messages, $messagesResponse->getMessages());
+                    $pageToken = $messagesResponse->getNextPageToken();
+                }
+            } catch (Exception $e) {
+                print 'An error occurred: ' . $e->getMessage();
+            }
+        } while ($pageToken);
+
+        return $messages;
+    }
+
 }

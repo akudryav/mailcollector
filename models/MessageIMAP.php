@@ -2,6 +2,10 @@
 
 namespace app\models;
 
+use Yii;
+use yii\helpers\Html;
+use app\components\MailHelper;
+
 /**
  * Класс для парсинга сообщений через imap
  */
@@ -10,9 +14,9 @@ class MessageIMAP extends Message
     private $mbox;
 
     // геттер-сеетер для imap потока письма
-    public function setMbox($mail) 
+    public function setMbox($value)
     {
-        $this->mbox = $mail;
+        $this->mbox = $value;
     }
     public function getMbox() 
     {
@@ -40,7 +44,7 @@ class MessageIMAP extends Message
         // хост отправителя
         $this->from_domain = $header->sender[0]->host;
         $this->subject = self::getDecodedHeader(self::getField($header, 'subject'));
-        $this->message_date = self::strToMysqlDate(self::getField($header, 'date'));
+        $this->message_date = MailHelper::strToMysqlDate(self::getField($header, 'date'));
         $this->body_text = $this->getTextBody();
         $this->body_html = $this->getHtmlBody();
         $this->modify_date = date("Y-m-d H:i:s");
@@ -166,14 +170,6 @@ class MessageIMAP extends Message
         return "TEXT/PLAIN";
     }
 
-    //перевести текст в дату MySQL
-    private static function strToMysqlDate($text)
-    {
-        if(null == $text) return null;
-        $unixTimestamp=strtotime($text);
-        return date("Y-m-d H:i:s", $unixTimestamp);
-    }
-
     //заполняем ассоциативный массив, где ключом является тип адреса,
     //а значение массив адресов
     public function loadAddress()
@@ -243,7 +239,7 @@ class MessageIMAP extends Message
             //Разные письма могут иметь вложения с одинаковыми названиями,
             //поэтому в файловой системе будем сохранять файла с уникальным именем,
             //сохранив при этом расширение файла
-            $file_path = self::getStoreDirectory() . uniqid() . self::getFileExtension($filename);
+            $file_path = MailHelper::getStoreDirectory() . uniqid() . MailHelper::getFileExtension($filename);
             file_put_contents($file_path, $text);
 
             //записываем информацию о файле в базу данных. Напомню, что в
@@ -266,22 +262,4 @@ class MessageIMAP extends Message
         return $attachCount;
     }
 
-    //Функция для получения пути к директории, где будут храниться файлы.
-    //Файлы будут сохраняться в поддиректории, созданной по
-    //текущей дате. Например, 2014-07-31. Это позволит
-    //не держать файлы в одной директории. Много файлов в
-    //одной директории замедляет чтение директории
-    private static function getStoreDirectory()
-    {
-        $date_folder = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . date('Y-m-d') . DIRECTORY_SEPARATOR;
-        if(!file_exists($date_folder)) mkdir($date_folder);
-        return $date_folder;
-    }
-
-    //получаем расширение файла
-    private static function getFileExtension($filename)
-    {
-        $arr = explode(".",$filename);
-        return count($arr) > 1 ? "." . end($arr) : "";
-    }
 }
