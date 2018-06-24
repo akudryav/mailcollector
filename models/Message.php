@@ -4,6 +4,7 @@ namespace app\models;
 
 use Yii;
 use yii\helpers\Html;
+use LanguageDetection\Language;
 
 /**
  * This is the model class for table "message".
@@ -30,6 +31,8 @@ use yii\helpers\Html;
 class Message extends \yii\db\ActiveRecord
 {
     public static $yes_no = ['Нет', 'Да'];
+    const LANG_LIST = ['de', 'en', 'fr', 'ru', 'tr'];
+
     /**
      * {@inheritdoc}
      */
@@ -46,7 +49,7 @@ class Message extends \yii\db\ActiveRecord
         return [
             [['mailbox_id', 'uid'], 'required'],
             [['mailbox_id', 'uid', 'attachment_count', 'is_ready'], 'integer'],
-            [['body_text', 'body_html', 'header', 'full_id'], 'string'],
+            [['body_text', 'body_html', 'header', 'full_id', 'label', 'language'], 'string'],
             [['message_date', 'create_date', 'modify_date'], 'safe'],
             [['from_ip', 'from_domain', 'subject'], 'string', 'max' => 255],
             [['mailbox_id'], 'exist', 'skipOnError' => true, 'targetClass' => Mailbox::className(), 'targetAttribute' => ['mailbox_id' => 'id']],
@@ -74,7 +77,16 @@ class Message extends \yii\db\ActiveRecord
             'create_date' => 'Дата загрузки',
             'modify_date' => 'Дата изменения',
             'is_ready' => 'Загружено полностью',
+            'label' => 'Метка',
+            'language' => 'Язык',
         ];
+    }
+
+    //Подбор языка сообщения
+    public function detectLang()
+    {
+        $ld = new Language(self::LANG_LIST);
+        $this->language = (string)$ld->detect(strip_tags($this->body_text));
     }
     
     public function statusName()
@@ -82,6 +94,15 @@ class Message extends \yii\db\ActiveRecord
         return isset(self::$yes_no[$this->is_ready]) ? self::$yes_no[$this->is_ready] : 'unknown';
     }
     
+    public function showAddresses()
+    {
+        $list = [];
+        foreach ($this->addresses as $r) {
+            $list[] = $r->type.': '.$r->name.' '.$r->email;
+        }
+        return implode('<br>', $list);
+    }
+
     public function showAttachments()
     {
         $list = [];

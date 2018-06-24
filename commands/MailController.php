@@ -107,6 +107,7 @@ class MailController extends Controller
             $range = "$uid_from:$uid_to";
             $message_uid = -1;
             $msg_count = 0;
+            // var_dump($mail->getMboxes());
             //перебираем сообщения
             foreach ($mail->getMessages($range) as $message) {
                 //получаем UID сообщения
@@ -134,6 +135,8 @@ class MailController extends Controller
                     $model->setMbox($mail->getImapStream());
                     // загрузка данных
                     $model->loadData();
+                    // определяем язык
+                    $model->detectLang();
                     // загрузка адресов
                     $model->loadAddress();
                     // загрузка вложений
@@ -226,6 +229,8 @@ class MailController extends Controller
                     $model->setMbox($mail->getService());
                     // загрузка данных
                     $model->loadData();
+                    // определяем язык
+                    $model->detectLang();
                     // загрузка вложений
                     $model->loadAttaches();
 

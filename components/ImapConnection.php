@@ -60,20 +60,26 @@ class ImapConnection extends \yii\base\Component {
 
     public function checkConnection()
     {
-        $mail = $this->getImapStream();
-        return imap_ping($mail);
+        $connection = $this->getImapStream();
+        return imap_ping($connection);
     }
 
     public function getMessages($range)
     {
-        $mail = $this->getImapStream();
-        return imap_fetch_overview($mail, $range, FT_UID);
+        $connection = $this->getImapStream();
+        return imap_fetch_overview($connection, $range, FT_UID);
+    }
+
+    public function getMboxes()
+    {
+        $connection = $this->getImapStream();
+        return imap_list($connection, $this->imapPath, '*');
     }
 
     public function getInfo()
     {
-        $mail = $this->getImapStream();
-        return imap_check($mail);
+        $connection = $this->getImapStream();
+        return imap_check($connection);
     }
 
     public function getLastError()

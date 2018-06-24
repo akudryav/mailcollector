@@ -33,6 +33,11 @@ $this->params['breadcrumbs'][] = $this->title;
             'uid',
             'from_ip',
             'from_domain',
+            [
+                'label' => 'Адреса',
+                'format' => 'html',
+                'value' => $model->showAddresses(),
+            ],
             'subject',
             'body_text:ntext',
             'body_html:html',
@@ -50,6 +55,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute'=>'is_ready',
                 'value' => $model->statusName(),
             ],
+            'language',
         ],
     ]) ?>
 

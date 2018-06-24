@@ -31,7 +31,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //'header:ntext',
             'message_date',
             'create_date',
-            //'modify_date',
+            'language',
             [
                 'attribute'=>'is_ready',
                 'value' => function($model) {

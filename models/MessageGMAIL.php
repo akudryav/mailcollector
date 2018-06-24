@@ -5,6 +5,7 @@ namespace app\models;
 use Yii;
 use yii\helpers\Html;
 use app\components\MailHelper;
+
 /**
  * Класс для парсинга сообщений gmail
  */
@@ -12,6 +13,7 @@ class MessageGMAIL extends Message
 {
     private $mbox;
     private $msgObj;
+
 
     // геттер-сеетер для imap потока письма
     public function setMbox($value)
@@ -43,7 +45,7 @@ class MessageGMAIL extends Message
         if(preg_match($regex, $headerString, $matches)){
             $this->from_ip = $matches[1];
         }
-        $regex='/from ([^\s])/s';
+        $regex='/from ([^\s]+)/s';
         if(preg_match($regex, self::getHeader($headerArr, 'Received'), $matches)){
             $this->from_domain = $matches[1];
         }
@@ -56,7 +58,6 @@ class MessageGMAIL extends Message
         // загрузка адресов
         $this->loadAddress($headerArr);
     }
-
 
     //получение заголовка если есть
     private static function getHeader($array, $index)
