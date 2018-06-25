@@ -46,13 +46,13 @@ class MessageGMAIL extends Message
             $this->from_ip = $matches[1];
         }
         $regex='/from ([^\s]+)/s';
-        if(preg_match($regex, self::getHeader($headerArr, 'Received'), $matches)){
+        if(preg_match($regex, self::getElem($headerArr, 'Received'), $matches)){
             $this->from_domain = $matches[1];
         }
-        $this->subject = self::getHeader($headerArr, 'Subject');
-        $this->message_date = MailHelper::strToMysqlDate(self::getHeader($headerArr, 'Date'));
-        $this->body_text = $bodyArr[0];
-        $this->body_html = $bodyArr[1];
+        $this->subject = self::getElem($headerArr, 'Subject');
+        $this->message_date = MailHelper::strToMysqlDate(self::getElem($headerArr, 'Date'));
+        $this->body_text = self::getElem($bodyArr, 0);
+        $this->body_html = self::getElem($bodyArr, 1);
         $this->modify_date = date("Y-m-d H:i:s");
         $this->is_ready = 1;
         // загрузка адресов
@@ -60,7 +60,7 @@ class MessageGMAIL extends Message
     }
 
     //получение заголовка если есть
-    private static function getHeader($array, $index)
+    private static function getElem($array, $index)
     {
         return isset($array[$index]) ? $array[$index] : null;
     }
