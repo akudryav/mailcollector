@@ -33,7 +33,7 @@ class GmailConnection extends \yii\base\Component {
     {
         $this->credential = Token::findOne(['mailbox_id' => $this->mailbox_id]);
         if(null == $this->credential || empty($this->credential->access_token)) {
-            echo 'Необходимо создать Oauth токен для аккаунта '.$this->email;
+            echo 'Необходимо создать Oauth токен для аккаунта '.$this->email.PHP_EOL;
             return false;
         }
         $this->client = $this->credential->getClient();
