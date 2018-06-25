@@ -32,13 +32,12 @@ class GmailConnection extends \yii\base\Component {
     public function init()
     {
         $this->credential = Token::findOne(['mailbox_id' => $this->mailbox_id]);
-        $this->client = $this->credential->getClient();
-        if (!empty($this->credential->access_token)) {
-            $accessToken = json_decode($this->credential->access_token, true);
-        } else {
+        if(null == $this->credential || empty($this->credential->access_token)) {
             echo 'Необходимо создать Oauth токен для аккаунта '.$this->email;
             return false;
         }
+        $this->client = $this->credential->getClient();
+        $accessToken = json_decode($this->credential->access_token, true);
         $this->client->setAccessToken($accessToken);
         $this->refreshToken();
         $this->service = new \Google_Service_Gmail($this->client);
