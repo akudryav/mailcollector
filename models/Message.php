@@ -86,7 +86,8 @@ class Message extends \yii\db\ActiveRecord
     public function detectLang()
     {
         $ld = new Language(self::LANG_LIST);
-        $this->language = (string)$ld->detect(strip_tags($this->body_text));
+        $text = !empty($this->body_text) ? strip_tags($this->body_text) : strip_tags($this->body_html);
+        $this->language = (string)$ld->detect($text);
     }
     
     public function statusName()

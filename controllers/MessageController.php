@@ -21,6 +21,7 @@ class MessageController extends AdminController
     {
         $dataProvider = new ActiveDataProvider([
             'query' => Message::find(),
+            'sort'=> ['defaultOrder' => ['id'=>SORT_DESC]]
         ]);
 
         return $this->render('index', [

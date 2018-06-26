@@ -108,7 +108,7 @@ class MessageGMAIL extends Message
     {
         $attachCount = 0;
         $messageDetails = $this->msgObj->getPayload();
-        foreach ($messageDetails['parts'] as $key => $value) {
+        foreach ($messageDetails['parts'] as $value) {
             if (isset($value['body']['attachmentId'])) {
                 $partId = $value['partId'];
 
@@ -154,7 +154,7 @@ class MessageGMAIL extends Message
     private function getHeaderArr()
     {
         $outArr = [];
-        foreach ($this->msgObj->getPayload()->getHeaders() as $key => $val) {
+        foreach ($this->msgObj->getPayload()->getHeaders() as $val) {
             $outArr[$val->name] = $val->value;
         }
         return $outArr;
@@ -163,9 +163,48 @@ class MessageGMAIL extends Message
     private function getBody()
     {
         $outArr = [];
-        foreach ($this->msgObj->getPayload()->getParts() as $key => $val) {
-            $outArr[] = self::base64url_decode($val->getBody()->getData());
+        $payload = $this->msgObj->getPayload();
+        // With no attachment, the payload might be directly in the body, encoded.
+        $body = $payload->getBody();
+        if($body && $payload['mimeType'] == 'text/plain') {
+            $outArr[0] = self::base64url_decode($body->getData());
         }
+        if($body && $payload['mimeType'] == 'text/html') {
+            $outArr[1] = self::base64url_decode($body->getData());
+        }
+
+        // If we didn't find a body, let's look for the parts
+        if(empty($outArr)) {
+            $parts = $payload->getParts();
+            foreach ($parts  as $part) {
+                if(isset($part['body']) && $part['mimeType'] == 'text/plain') {
+                    $outArr[0] = self::base64url_decode($part['body']->getData());
+                }
+                if(isset($part['body']) && $part['mimeType'] == 'text/html') {
+                    $outArr[1] = self::base64url_decode($part['body']->getData());
+                }
+            }
+        } if(empty($outArr)) {
+            foreach ($parts  as $part) {
+                // Last try: if we didn't find the body in the first parts, 
+                // let's loop into the parts of the parts (as @Tholle suggested).
+                if(isset($part['parts']) && !$FOUND_BODY) {
+                    foreach ($part['parts'] as $p) {
+                        // replace 'text/html' by 'text/plain' if you prefer
+                        if(isset($p['body']) && $p['mimeType'] == 'text/plain') {
+                            $outArr[0] = self::base64url_decode($part['body']->getData());
+                        }
+                        if(isset($p['body']) && $p['mimeType'] == 'text/html') {
+                            $outArr[1] = self::base64url_decode($part['body']->getData());
+                        }
+                    }
+                }
+                if(!empty($outArr)) {
+                    break;
+                }
+            }
+        }
+        
         return $outArr;
     }
 
