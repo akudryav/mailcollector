@@ -18,7 +18,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'port')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'is_ssl')->dropDownList(app\models\Server::$yes_no) ?>
+    <?= $form->field($model, 'is_ssl')->dropDownList(app\components\MailHelper::$yes_no) ?>
+
+    <?= $form->field($model, 'spam_folder')->textInput(['maxlength' => true]) ?>
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-success']) ?>

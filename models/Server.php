@@ -17,7 +17,6 @@ use Yii;
  */
 class Server extends \yii\db\ActiveRecord
 {
-    public static $yes_no = ['Нет', 'Да'];
     /**
      * {@inheritdoc}
      */
@@ -34,7 +33,7 @@ class Server extends \yii\db\ActiveRecord
         return [
             [['imap', 'host'], 'required'],
             [['is_ssl'], 'integer'],
-            [['imap', 'host'], 'string', 'max' => 255],
+            [['imap', 'host', 'spam_folder'], 'string', 'max' => 255],
             [['port'], 'string', 'max' => 10],
             [['host'], 'unique'],
         ];
@@ -51,6 +50,7 @@ class Server extends \yii\db\ActiveRecord
             'host' => 'Почтовый домен',
             'port' => 'Порт IMAP',
             'is_ssl' => 'Нужен SSL',
+            'spam_folder' => 'Строка подключения к папке спама',
         ];
     }
     
@@ -65,11 +65,6 @@ class Server extends \yii\db\ActiveRecord
             return $model->id;
         }
         return false;
-    }
-
-    public function statusName()
-    {
-        return isset(self::$yes_no[$this->is_ssl]) ? self::$yes_no[$this->is_ssl] : 'unknown';
     }
 
     /**

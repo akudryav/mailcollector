@@ -32,7 +32,11 @@ $this->params['breadcrumbs'][] = $this->title;
             'host',
             'imap',
             'port',
-            'is_ssl',
+            [
+                'attribute'=>'is_ssl',
+                'value' => app\components\MailHelper::yesOrNo($model->is_ssl),
+            ],
+            'spam_folder'
         ],
     ]) ?>
 

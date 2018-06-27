@@ -5,30 +5,7 @@ use Yii;
 
 class MailHelper {
 
-    public static function makeConnection($account)
-    {
-        if('gmail.com' == $account->server->host) {
-            return new GmailConnection([
-                'mailbox_id' => $account->id,
-                'email' => $account->email,
-            ]);
-        } else {
-            // получаем данные почтового сервера
-            $server = $account->server;
-            //если подключение идет через SSL,
-            //то достаточно добавить "/ssl" к строке подключения, и
-            //поддержка SSL будет включена
-            $ssl = $server->is_ssl ? "/ssl" : "";
-
-            // конфигурация  подключения
-            $config = [
-                'imapPath' => "{{$server->imap}:{$server->port}{$ssl}}",
-                'imapLogin' => $account->email,
-                'imapPassword' => $account->password,
-            ];
-            return new ImapConnection($config);
-        }
-    }
+    public static $yes_no = ['Нет', 'Да'];
 
     //Функция для получения пути к директории, где будут храниться файлы.
     //Файлы будут сохраняться в поддиректории, созданной по
@@ -55,5 +32,10 @@ class MailHelper {
         if(null == $text) return null;
         $unixTimestamp=strtotime($text);
         return date("Y-m-d H:i:s", $unixTimestamp);
+    }
+
+    public static function yesOrNo($value)
+    {
+        return isset(self::$yes_no[$value]) ? self::$yes_no[$value] : 'unknown';
     }
 }

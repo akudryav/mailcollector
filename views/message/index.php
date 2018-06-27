@@ -21,7 +21,10 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'mailbox',
                 'value' => 'mailbox.email'
             ],
-            'uid',
+            'label',
+            'mailer',
+            'ip_type',
+            'language',
             //'from_ip',
             //'from_domain',
             'subject',
@@ -30,16 +33,13 @@ $this->params['breadcrumbs'][] = $this->title;
             'attachment_count',
             //'header:ntext',
             'message_date',
-            'create_date',
-            'language',
-            [
-                'attribute'=>'is_ready',
-                'value' => function($model) {
-                    return $model->statusName();
-                }
-            ],
 
-            ['class' => 'yii\grid\ActionColumn'],
+
+            [
+                'class' => 'yii\grid\ActionColumn',
+                'header'=>'Действия',
+                'headerOptions' => ['width' => '100'],
+            ],
         ],
     ]); ?>
 </div>

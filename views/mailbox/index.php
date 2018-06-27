@@ -33,12 +33,11 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute'=>'is_deleted',
                 'value' => function($model) {
-                    return $model->statusName();
+                    return app\components\MailHelper::yesOrNo($model->is_deleted);
                 }
             ],
             'vertical.name',
-            'last_message_uid',
-
+            'check_time:datetime',
             [
                 'class' => 'yii\grid\ActionColumn',
                 'header'=>'Действия',

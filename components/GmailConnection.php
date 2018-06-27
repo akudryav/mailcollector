@@ -4,24 +4,19 @@ namespace app\components;
 
 use Yii;
 use app\models\Token;
+use app\models\MessageGMAIL;
 use google\apiclient;
 
 class GmailConnection extends \yii\base\Component {
-    private $mailbox_id;
-    private $email;
+    private $account;
     private $client;
     private $credential;
     private $service;
     private $error;
 
-    public function setMailbox_id($value)
+    public function setAccount($value)
     {
-        $this->mailbox_id = $value;
-    }
-
-    public function setEmail($value)
-    {
-        $this->email = $value;
+        $this->account = $value;
     }
 
     public function getService()
@@ -31,9 +26,9 @@ class GmailConnection extends \yii\base\Component {
 
     public function init()
     {
-        $this->credential = Token::findOne(['mailbox_id' => $this->mailbox_id]);
+        $this->credential = Token::findOne(['mailbox_id' => $this->account->id]);
         if(null == $this->credential || empty($this->credential->access_token)) {
-            echo 'Необходимо создать Oauth токен для аккаунта '.$this->email.PHP_EOL;
+            echo 'Необходимо создать Oauth токен для аккаунта '.$this->account->email.PHP_EOL;
             return false;
         }
         $this->client = $this->credential->getClient();
@@ -61,7 +56,6 @@ class GmailConnection extends \yii\base\Component {
 
     public function disconnect()
     {
-
     }
 
     public function getLastError()
@@ -96,6 +90,64 @@ class GmailConnection extends \yii\base\Component {
         } while ($pageToken);
 
         return $messages;
+    }
+
+    public function readFolder($label = 'inbox')
+    {
+        //перебираем сообщения
+        $optParams['labelIds'] = strtoupper($label);
+        $msg_count = 0;
+        foreach ($this->getMessages($optParams) as $message) {
+            try {
+                $full_id = $message->getId();
+                // Проверяем наличие сообщения в БД
+                if(MessageGMAIL::findByFullid($full_id)) {
+                    continue;
+                }
+                //отключаем Autocommit, будем сами управлять транзакциями
+                $transaction = Yii::$app->db->beginTransaction();
+                $model = new MessageGMAIL();
+
+                //создаем запись в таблице messages,
+                $model->setAttributes([
+                    'mailbox_id' => $this->account->id,
+                    'uid' => 1,
+                    'full_id' => $full_id,
+                    'label' => $label,
+                    'create_date' => date("Y-m-d H:i:s"),
+                    'is_ready' => 0
+                ]);
+
+                if (!$model->save()) {
+                    Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
+                }
+
+                Yii::info("loading message $full_id", 'mailer');
+                echo "loading message $full_id" . PHP_EOL;
+                $model->setMbox($this->getService());
+                // загрузка данных
+                $model->loadData();
+                // определяем язык
+                $model->detectLang();
+                // загрузка вложений
+                $model->loadAttaches();
+
+                if (!$model->save()) {
+                    Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
+                } else {
+                    $msg_count ++;
+                }
+
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                throw $e;
+            } catch (\Throwable $e) {
+                $transaction->rollBack();
+                throw $e;
+            }
+            $transaction->commit();
+
+        }
     }
 
 }

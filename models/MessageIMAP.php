@@ -12,6 +12,7 @@ use app\components\MailHelper;
 class MessageIMAP extends Message
 {
     private $mbox;
+    private $structure;
 
     // геттер-сеетер для imap потока письма
     public function setMbox($value)
@@ -34,6 +35,7 @@ class MessageIMAP extends Message
     {
         //получение исходного заголовка письма
         $this->header = imap_fetchheader($this->mbox, $this->uid, FT_UID);
+        $this->structure = imap_fetchstructure($this->mbox, $this->uid, FT_UID);
         // пытаемся найти ip отправителя
         $regex='/client\-ip\=(.+?)\;/s';
         if(preg_match($regex, $this->header, $matches)){
@@ -47,6 +49,7 @@ class MessageIMAP extends Message
         $this->message_date = MailHelper::strToMysqlDate(self::getField($header, 'date'));
         $this->body_text = $this->getTextBody();
         $this->body_html = $this->getHtmlBody();
+        $this->full_id = self::getField($header, 'Message-ID');
         $this->modify_date = date("Y-m-d H:i:s");
         $this->is_ready = 1;
     }
@@ -93,7 +96,7 @@ class MessageIMAP extends Message
     {
         if (!$structure) {
             //получение структуры письма
-            $structure = imap_fetchstructure($this->mbox, $this->uid, FT_UID);
+            $structure = $this->structure;
         }
         if ($structure) {
             if ($mimetype == self::getMimeType($structure)) { // простое письмо
@@ -131,6 +134,7 @@ class MessageIMAP extends Message
                 if($charset && ($mimetype == 'TEXT/PLAIN' || $mimetype == 'TEXT/HTML')){
                     $text = iconv($charset, 'UTF-8', $text);
                 }
+
                 return $text;
             }
 
@@ -210,12 +214,10 @@ class MessageIMAP extends Message
     //загрузка вложений
     public function loadAttaches()
     {
-        //получаем структуру сообщения
-        $struct = imap_fetchstructure($this->mbox, $this->uid,FT_UID);
         $attachCount = 0;
-        if(empty($struct->parts)) return $attachCount;
+        if(empty($this->structure->parts)) return $attachCount;
         //перебираем части сообщения
-        foreach($struct->parts as $number => $part){
+        foreach($this->structure->parts as $number => $part){
             //ищем части, у которых ifdisposition равно 1 и disposition равно ATTACHMENT,
             //все остальные части игнорируем. Также стоит заметить, что значение поля
             //disposition может быть как в верхнем, так и в нижнем регистрах,

@@ -30,7 +30,6 @@ use LanguageDetection\Language;
  */
 class Message extends \yii\db\ActiveRecord
 {
-    public static $yes_no = ['Нет', 'Да'];
     const LANG_LIST = ['de', 'en', 'fr', 'ru', 'tr'];
 
     /**
@@ -49,7 +48,7 @@ class Message extends \yii\db\ActiveRecord
         return [
             [['mailbox_id', 'uid'], 'required'],
             [['mailbox_id', 'uid', 'attachment_count', 'is_ready'], 'integer'],
-            [['body_text', 'body_html', 'header', 'full_id', 'label', 'language'], 'string'],
+            [['body_text', 'body_html', 'header', 'full_id', 'label', 'language', 'mailer', 'ip_type'], 'string'],
             [['message_date', 'create_date', 'modify_date'], 'safe'],
             [['from_ip', 'from_domain', 'subject'], 'string', 'max' => 255],
             [['mailbox_id'], 'exist', 'skipOnError' => true, 'targetClass' => Mailbox::className(), 'targetAttribute' => ['mailbox_id' => 'id']],
@@ -79,6 +78,8 @@ class Message extends \yii\db\ActiveRecord
             'is_ready' => 'Загружено полностью',
             'label' => 'Метка',
             'language' => 'Язык',
+            'mailer' => 'Система рассылки',
+            'ip_type' => 'Тип ip',
         ];
     }
 
@@ -89,12 +90,7 @@ class Message extends \yii\db\ActiveRecord
         $text = !empty($this->body_text) ? strip_tags($this->body_text) : strip_tags($this->body_html);
         $this->language = (string)$ld->detect($text);
     }
-    
-    public function statusName()
-    {
-        return isset(self::$yes_no[$this->is_ready]) ? self::$yes_no[$this->is_ready] : 'unknown';
-    }
-    
+
     public function showAddresses()
     {
         $list = [];

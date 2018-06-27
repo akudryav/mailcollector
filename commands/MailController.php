@@ -2,15 +2,12 @@
 
 namespace app\commands;
 
-use app\models\MessageGMAIL;
-use app\models\MessageIMAP;
 use Yii;
-use yii\helpers\Html;
+use app\components\ImapConnection;
+use app\components\GmailConnection;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use app\models\Mailbox;
-use app\models\Message;
-use app\components\MailHelper;
 
 /**
  *предполагается, что данный скрипт будет запускаться планировщиком
@@ -61,11 +58,6 @@ class MailController extends Controller
         fclose($fp);//закрываем файл
         unlink($filename);//удаляем файл
     }
-    
-    private function connectImap($account)
-    {
-
-    }
 
     /**
      * Скачивание писем (полная загрузка) по IMAP
@@ -93,84 +85,28 @@ class MailController extends Controller
         if (!$fp) return ExitCode::CANTCREAT;
 
         foreach (Mailbox::getImap() as $account) {
-            $mail = MailHelper::makeConnection($account);
-            echo "Read {$account->email}";
+            $mail = new ImapConnection(['account' => $account]);
+            echo "Read {$account->email}".PHP_EOL;
             
             if (!$mail || !$mail->checkConnection()) {
                 //пишем влог сообщение о неудачной попытке подключения
                 Yii::error('Error opening Connection. ' . $mail->getLastError(), 'mailer');
                 continue;//переходим к следующему ящику
             }
-
-            $uid_from = $account->last_message_uid + 1;
-            $uid_to = 2147483647;
-            $range = "$uid_from:$uid_to";
-            $message_uid = -1;
-            $msg_count = 0;
-            // var_dump($mail->getMboxes());
-            //перебираем сообщения
-            foreach ($mail->getMessages($range) as $message) {
-                //получаем UID сообщения
-                $message_uid = $message->uid;
-                Yii::info("add message $message_uid", 'mailer');
-
-                try {
-                    //отключаем Autocommit, будем сами управлять транзакциями
-                    $transaction = Mailbox::getDb()->beginTransaction();
-                    $model = new MessageIMAP();
-                    //создаем запись в таблице messages,
-                    $model->setAttributes([
-                        'mailbox_id' => $account->id,
-                        'uid' => $message_uid,
-                        'create_date' => date("Y-m-d H:i:s"),
-                        'is_ready' => 0
-                    ]);
-
-                    if (!$model->save()) {
-                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
-                    }
-
-                    Yii::info("loading message $message_uid", 'mailer');
-                    echo "loading message $message_uid" . PHP_EOL;
-                    $model->setMbox($mail->getImapStream());
-                    // загрузка данных
-                    $model->loadData();
-                    // определяем язык
-                    $model->detectLang();
-                    // загрузка адресов
-                    $model->loadAddress();
-                    // загрузка вложений
-                    $model->loadAttaches();
-
-                    if (!$model->save()) {
-                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
-                    } else {
-                        $msg_count ++;
-                    }
-
-                    } catch (\Exception $e) {
-                        $transaction->rollBack();
-                        throw $e;
-                    } catch (\Throwable $e) {
-                        $transaction->rollBack();
-                        throw $e;
-                    }
-                $transaction->commit();
-
+            // получаем из папки INBOX по умолчанию
+            $msg_count = $mail->readFolder();
+            Yii::info('Получено писем INBOX: ' . $msg_count, 'mailer');
+            // переключаем на Спам и снова получаем
+            if(!$mail->openSpam()) {
+                Yii::error('Error spam Connection. ' . $mail->getLastError(), 'mailer');
+                continue;//переходим к следующему ящику
             }
-            if ($message_uid != -1) {
-                Yii::info("last message uid = $message_uid", 'mailer');
+            $msg_count = $mail->readFolder('spam');
+            Yii::info('Получено писем SPAM: ' . $msg_count, 'mailer');
 
-                //если появились новые сообщения,
-                //то сохраняем UID последнего сообщения
-                $account->last_message_uid = $message_uid;
-                $account->check_time = time();
-                $account->save();
-            } else {
-                //нет новых сообщений
-                Yii::info('no new messages', 'mailer');
-            }
-            echo 'Loaded messages: '.$msg_count. PHP_EOL;
+            $account->check_time = time();
+            $account->save();
+
             //закрываем поток
             $mail->disconnect();
         }
@@ -178,7 +114,6 @@ class MailController extends Controller
         // удаляем блокировку
         $this->releaseLock($fp);
         return ExitCode::OK;
-
 
     }
      /**
@@ -190,74 +125,22 @@ class MailController extends Controller
         if (!$fp) return ExitCode::CANTCREAT;
 
         foreach (Mailbox::getGmail() as $account) {
-            $mail = MailHelper::makeConnection($account);
-            echo "Read {$account->email}";
+            $mail = new GmailConnection(['account' => $account]);
+            echo "Read {$account->email}".PHP_EOL;
 
             if (!$mail || !$mail->checkConnection()) {
                 //пишем влог сообщение о неудачной попытке подключения
                 Yii::error('Error opening Connection. ' . $mail->getLastError(), 'mailer');
                 continue;//переходим к следующему ящику
             }
-            $msg_count = 0;
-            //перебираем сообщения
-            $optParams['labelIds'] = 'INBOX';
-            foreach ($mail->getMessages($optParams) as $message) {
-                try {
-                    $full_id = $message->getId();
-                    //отключаем Autocommit, будем сами управлять транзакциями
-                    //$transaction = Mailbox::getDb()->beginTransaction();
-                    $model = new MessageGMAIL();
-                    // Проверяем наличие сообщения в БД
-                    if($model->findByFullid($full_id)) {
-                        continue;
-                    }
-                    //создаем запись в таблице messages,
-                    $model->setAttributes([
-                        'mailbox_id' => $account->id,
-                        'uid' => 1,
-                        'full_id' => $full_id,
-                        'create_date' => date("Y-m-d H:i:s"),
-                        'is_ready' => 0
-                    ]);
+            $msg_count = $mail->readFolder();
+            Yii::info('Получено писем INBOX: ' . $msg_count, 'mailer');
+            $msg_count = $mail->readFolder('spam');
+            Yii::info('Получено писем SPAM: ' . $msg_count, 'mailer');
 
-                    if (!$model->save()) {
-                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
-                    }
+            $account->check_time = time();
+            $account->save();
 
-                    Yii::info("loading message $full_id", 'mailer');
-                    echo "loading message $full_id" . PHP_EOL;
-                    $model->setMbox($mail->getService());
-                    // загрузка данных
-                    $model->loadData();
-                    // определяем язык
-                    $model->detectLang();
-                    // загрузка вложений
-                    $model->loadAttaches();
-
-                    if (!$model->save()) {
-                        Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
-                    } else {
-                        $msg_count ++;
-                    }
-
-                } catch (\Exception $e) {
-                    //$transaction->rollBack();
-                    throw $e;
-                } catch (\Throwable $e) {
-                    //$transaction->rollBack();
-                    throw $e;
-                }
-                //$transaction->commit();
-
-            }
-            if ($msg_count > 0) {
-                $account->check_time = time();
-                $account->save();
-            } else {
-                //нет новых сообщений
-                Yii::info('no new messages', 'mailer');
-            }
-            echo 'Loaded messages: '.$msg_count. PHP_EOL;
             //закрываем поток
             $mail->disconnect();
         }

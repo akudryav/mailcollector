@@ -36,7 +36,7 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'modify_date')->textInput() ?>
 
-    <?= $form->field($model, 'is_ready')->dropDownList(app\models\Message::$yes_no) ?>
+    <?= $form->field($model, 'is_ready')->dropDownList(app\components\MailHelper::$yes_no) ?>
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-success']) ?>

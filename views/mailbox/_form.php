@@ -37,7 +37,7 @@ $listdata=Vertical::find()
         ]
     ]) ?>
 
-    <?= $form->field($model, 'is_deleted')->dropDownList(Mailbox::$yes_no) ?>
+    <?= $form->field($model, 'is_deleted')->dropDownList(app\components\MailHelper::$yes_no) ?>
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-success']) ?>

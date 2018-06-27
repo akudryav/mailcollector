@@ -35,7 +35,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'phone',
             'vertical.name',
             'is_deleted',
-            'last_message_uid',
+            'check_time:datetime',
         ],
     ]) ?>
 

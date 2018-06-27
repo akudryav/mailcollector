@@ -28,9 +28,12 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
-            'id',
-            'mailbox.email',
             'uid',
+            'mailbox.email',
+            'label',
+            'mailer',
+            'ip_type',
+            'language',
             'from_ip',
             'from_domain',
             [
@@ -49,13 +52,10 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             'header:ntext',
             'message_date:datetime',
-            'create_date:datetime',
-            'modify_date:datetime',
             [
                 'attribute'=>'is_ready',
-                'value' => $model->statusName(),
+                'value' => app\components\MailHelper::yesOrNo($model->is_ready),
             ],
-            'language',
         ],
     ]) ?>
 

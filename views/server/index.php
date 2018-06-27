@@ -25,8 +25,13 @@ $this->params['breadcrumbs'][] = $this->title;
             'host',
             'imap',
             'port',
-            'is_ssl',
-
+            [
+                'attribute'=>'is_ssl',
+                'value' => function($model) {
+                    return app\components\MailHelper::yesOrNo($model->is_ssl);
+                }
+            ],
+            'spam_folder',
             ['class' => 'yii\grid\ActionColumn'],
         ],
     ]); ?>

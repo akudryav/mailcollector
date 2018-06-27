@@ -3,7 +3,6 @@
 namespace app\models;
 
 use Yii;
-use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 /**
  * This is the model class for table "mailbox".
@@ -12,13 +11,12 @@ use yii\helpers\Html;
  * @property string $email
  * @property string $password
  * @property int $is_deleted
- * @property int $last_message_uid
+ * @property int $check_time
  *
  * @property Message[] $messages
  */
 class Mailbox extends \yii\db\ActiveRecord
 {
-    public static $yes_no = ['Нет', 'Да'];
     /**
      * {@inheritdoc}
      */
@@ -34,7 +32,7 @@ class Mailbox extends \yii\db\ActiveRecord
     {
         return [
             [['email', 'password'], 'required'],
-            [['is_deleted', 'last_message_uid'], 'integer'],
+            [['is_deleted', 'check_time'], 'integer'],
             [['email', 'password', 'buyer', 'phone'], 'string', 'max' => 255],
             ['is_deleted', 'default', 'value' => 0],
             [['email'], 'unique'],
@@ -57,7 +55,7 @@ class Mailbox extends \yii\db\ActiveRecord
             'phone' => 'Телефон для подтверждений',
             'is_deleted' => 'Аккаунт блокирован',
             'vertical_id' => 'Вертикаль',
-            'last_message_uid' => 'Uid Последнего сообщения',
+            'check_time' => 'Время последней проверки',
         ];
     }
     
@@ -80,11 +78,6 @@ class Mailbox extends \yii\db\ActiveRecord
         return self::find()
             ->where(['email' => trim($email)])
             ->one();
-    }
-
-    public function statusName()
-    {
-        return isset(self::$yes_no[$this->is_deleted]) ? self::$yes_no[$this->is_deleted] : 'unknown';
     }
 
     /**
@@ -133,6 +126,11 @@ class Mailbox extends \yii\db\ActiveRecord
             ->where(['is_deleted' => 0])
             ->andWhere(['server.host' => 'gmail.com'])
             ->all();
+    }
+
+    public function getMaxUid($label = 'inbox')
+    {
+        return Message::find()->where(['label' => $label])->max('uid');
     }
 
     public function tokenUrl($url)
