@@ -127,8 +127,6 @@ class GmailConnection extends \yii\base\Component {
                 $model->setMbox($this->getService());
                 // загрузка данных
                 $model->loadData();
-                // определяем язык
-                $model->detectLang();
                 // загрузка вложений
                 $model->loadAttaches();
 

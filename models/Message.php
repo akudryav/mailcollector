@@ -83,8 +83,46 @@ class Message extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+
+            $this->detectLang();
+            $this->detectIP();
+
+            return true;
+        }
+        return false;
+    }
+    //определение типа ip
+    private function detectIP()
+    {
+        // пытаемся найти ip отправителя
+        $regex='/client\-ip\=(.+?)\;/s';
+        if(preg_match($regex, $this->header, $matches)){
+            $this->from_ip = $matches[1];
+        }
+
+        if(empty($this->from_ip)) {
+            $regex = '/Received:.*((?:\d+\.){3}\d+)/';
+            if(preg_match_all($regex, $this->header, $matches)){
+                //var_dump($matches);
+                $this->from_ip = end($matches[1]);
+            }
+        }
+
+        if(empty($this->from_ip)) return;
+
+        if(filter_var($this->from_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $this->ip_type = 'IPv4';
+        }
+        if(filter_var($this->from_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $this->ip_type = 'IPv6';
+        }
+    }
+
     //Подбор языка сообщения
-    public function detectLang()
+    private function detectLang()
     {
         $ld = new Language(self::LANG_LIST);
         $text = !empty($this->body_text) ? strip_tags($this->body_text) : strip_tags($this->body_html);

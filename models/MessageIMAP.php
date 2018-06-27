@@ -36,11 +36,6 @@ class MessageIMAP extends Message
         //получение исходного заголовка письма
         $this->header = imap_fetchheader($this->mbox, $this->uid, FT_UID);
         $this->structure = imap_fetchstructure($this->mbox, $this->uid, FT_UID);
-        // пытаемся найти ip отправителя
-        $regex='/client\-ip\=(.+?)\;/s';
-        if(preg_match($regex, $this->header, $matches)){
-            $this->from_ip = $matches[1];
-        }
         //получение заголовка письма в виде объекта
         $header = imap_rfc822_parse_headers($this->header);
         // хост отправителя

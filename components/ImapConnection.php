@@ -127,8 +127,6 @@ class ImapConnection extends \yii\base\Component {
                 $model->setMbox($this->getImapStream());
                 // загрузка данных
                 $model->loadData();
-                // определяем язык
-                $model->detectLang();
                 // загрузка адресов
                 $model->loadAddress();
                 // загрузка вложений

@@ -39,16 +39,12 @@ class MessageGMAIL extends Message
         $headerArr = $this->getHeaderArr();
         $bodyArr = $this->getBody();
 
-        $headerString = implode('', $headerArr);
-        // пытаемся найти ip отправителя
-        $regex='/client\-ip\=(.+?)\;/s';
-        if(preg_match($regex, $headerString, $matches)){
-            $this->from_ip = $matches[1];
-        }
+        $this->header = implode('', $headerArr);
         $regex='/from ([^\s]+)/s';
         if(preg_match($regex, self::getElem($headerArr, 'Received'), $matches)){
             $this->from_domain = $matches[1];
         }
+
         $this->subject = self::getElem($headerArr, 'Subject');
         $this->message_date = MailHelper::strToMysqlDate(self::getElem($headerArr, 'Date'));
         $this->body_text = self::getElem($bodyArr, 0);
