@@ -96,6 +96,8 @@ class GmailConnection extends \yii\base\Component {
     {
         //перебираем сообщения
         $optParams['labelIds'] = strtoupper($label);
+        $optParams['q'] = 'after:'.date('Y/m/d', strtotime('-1 day', $this->account->check_time));
+
         $msg_count = 0;
         foreach ($this->getMessages($optParams) as $message) {
             try {

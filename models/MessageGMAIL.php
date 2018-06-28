@@ -188,7 +188,7 @@ class MessageGMAIL extends Message
             foreach ($parts  as $part) {
                 // Last try: if we didn't find the body in the first parts, 
                 // let's loop into the parts of the parts (as @Tholle suggested).
-                if(isset($part['parts']) && !$FOUND_BODY) {
+                if(isset($part['parts']) && empty($outArr)) {
                     foreach ($part['parts'] as $p) {
                         // replace 'text/html' by 'text/plain' if you prefer
                         if(isset($p['body']) && $p['mimeType'] == 'text/plain') {
