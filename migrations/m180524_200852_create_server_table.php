@@ -14,8 +14,8 @@ class m180524_200852_create_server_table extends Migration
     {
         $this->createTable('server', [
             'id' => $this->primaryKey(),
-            'name' => $this->string()->notNull()->unique(),
-            'host' => $this->string()->notNull(),
+            'name' => $this->string(191)->notNull()->unique(),
+            'host' => $this->string(191)->notNull(),
             'port' => $this->string(10)->defaultValue('993'),
             'is_ssl' => $this->boolean()->notNull()->defaultValue(1),
         ]);

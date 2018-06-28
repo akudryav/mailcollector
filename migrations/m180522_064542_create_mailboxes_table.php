@@ -14,9 +14,9 @@ class m180522_064542_create_mailboxes_table extends Migration
     {
         $this->createTable('mailbox', [
             'id' => $this->primaryKey(),
-            'email' => $this->string()->notNull()->unique(),
-            'password' => $this->string()->notNull(),
-            'host' => $this->string()->notNull(),
+            'email' => $this->string(191)->notNull()->unique(),
+            'password' => $this->string(191)->notNull(),
+            'host' => $this->string(191)->notNull(),
             'port' => $this->string(10),
             'is_ssl' => $this->boolean()->notNull()->defaultValue(1),
             'is_deleted' => $this->boolean()->notNull()->defaultValue(0),

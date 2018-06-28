@@ -14,7 +14,7 @@ class m180605_082312_create_vertical_table extends Migration
     {
         $this->createTable('vertical', [
             'id' => $this->primaryKey(),
-            'name' => $this->string()->notNull()->unique(),
+            'name' => $this->string(191)->notNull()->unique(),
         ]);
         
         $this->addColumn('mailbox', 'vertical_id', $this->integer());
