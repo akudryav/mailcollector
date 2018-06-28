@@ -15,10 +15,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
         'columns' => [
             'id',
             [
-                'attribute' => 'mailbox',
+                'header'=>'Аккаунт',
+                'attribute' => 'email',
                 'value' => 'mailbox.email'
             ],
             'label',

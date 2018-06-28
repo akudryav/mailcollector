@@ -30,7 +30,7 @@ use LanguageDetection\Language;
  */
 class Message extends \yii\db\ActiveRecord
 {
-    const LANG_LIST = ['de', 'en', 'fr', 'ru', 'tr'];
+    const LANG_LIST = ['de', 'en', 'fr', 'ru', 'it', 'es', 'nl'];
 
     /**
      * {@inheritdoc}
@@ -89,6 +89,7 @@ class Message extends \yii\db\ActiveRecord
 
             $this->detectLang();
             $this->detectIP();
+            $this->detectMailer();
 
             return true;
         }
@@ -104,9 +105,8 @@ class Message extends \yii\db\ActiveRecord
         }
 
         if(empty($this->from_ip)) {
-            $regex = '/Received:.*((?:\d+\.){3}\d+)/';
+            $regex = '/Received:.*\[([^\]]*)\]/';
             if(preg_match_all($regex, $this->header, $matches)){
-                //var_dump($matches);
                 $this->from_ip = end($matches[1]);
             }
         }
@@ -118,6 +118,18 @@ class Message extends \yii\db\ActiveRecord
         }
         if(filter_var($this->from_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             $this->ip_type = 'IPv6';
+        }
+    }
+    
+    //определение мейлера
+    private function detectMailer()
+    {
+        $mailers = ['mailchimp', 'sendgrid', 'amazon'];
+        foreach ($mailers as $url) {
+            if (stripos($this->header, $url) !== FALSE) {
+                $this->mailer = $url;
+                return;
+            }
         }
     }
 

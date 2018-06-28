@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use Yii;
 use app\models\Message;
+use app\models\MessageSearch;
 use yii\data\ActiveDataProvider;
 use app\components\AdminController;
 use yii\web\NotFoundHttpException;
@@ -19,13 +20,12 @@ class MessageController extends AdminController
      */
     public function actionIndex()
     {
-        $dataProvider = new ActiveDataProvider([
-            'query' => Message::find(),
-            'sort'=> ['defaultOrder' => ['id'=>SORT_DESC]]
-        ]);
-
+        $searchModel = new MessageSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->get());
+        
         return $this->render('index', [
             'dataProvider' => $dataProvider,
+            'searchModel' => $searchModel,
         ]);
     }
 

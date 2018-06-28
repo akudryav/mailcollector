@@ -39,7 +39,11 @@ class MessageGMAIL extends Message
         $headerArr = $this->getHeaderArr();
         $bodyArr = $this->getBody();
 
-        $this->header = implode('', $headerArr);
+        $this->header = implode("\n", array_map(
+            function ($v, $k) { return sprintf("%s: %s", $k, $v); },
+            $headerArr,
+            array_keys($headerArr)
+        ));
         $regex='/from ([^\s]+)/s';
         if(preg_match($regex, self::getElem($headerArr, 'Received'), $matches)){
             $this->from_domain = $matches[1];
