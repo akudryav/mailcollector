@@ -50,7 +50,7 @@ class Mailbox extends \yii\db\ActiveRecord
             'id' => 'ID',
             'email' => 'Email',
             'password' => 'Пароль',
-            'server_id' => 'Почтовый сервер',
+            'server_id' => 'Почтовый провайдер',
             'buyer' => 'Buyer name', 
             'phone' => 'Телефон для подтверждений',
             'is_deleted' => 'Аккаунт блокирован',
@@ -67,7 +67,7 @@ class Mailbox extends \yii\db\ActiveRecord
 
         $this->server_id = Server::findIdByMail($this->email);
         if(!$this->server_id) {
-            $this->addError('email', 'Не найден почтовый сервер для '.$this->email);
+            $this->addError('email', 'Не найден почтовый провайдер для '.$this->email);
             return false;
         }
         return true;

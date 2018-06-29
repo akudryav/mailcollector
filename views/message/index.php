@@ -2,6 +2,9 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
+use yii\helpers\ArrayHelper;
+use app\models\Server;
+use app\models\Vertical;
 
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ActiveDataProvider */
@@ -23,16 +26,24 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'email',
                 'value' => 'mailbox.email'
             ],
+            [
+                'header'=>'Провайдер',
+                'attribute' => 'server',
+                'value' => 'server.host',
+                'filter'=>ArrayHelper::map(Server::find()->asArray()->all(), 'id', 'host'),
+            ],
+            [
+                'header'=>'Вертикаль',
+                'attribute' => 'vertical',
+                'value' => 'vertical.name',
+                'filter'=>ArrayHelper::map(Vertical::find()->asArray()->all(), 'id', 'name'),
+            ],
             'label',
             'mailer',
             'ip_type',
             'language',
-            //'from_ip',
-            //'from_domain',
             'subject',
-            //'body_text:ntext',
-            //'body_html:ntext',
-            'attachment_count',
+            //'attachment_count',
             //'header:ntext',
             'message_date',
 
@@ -40,7 +51,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'class' => 'yii\grid\ActionColumn',
                 'header'=>'Действия',
-                'headerOptions' => ['width' => '100'],
+                'headerOptions' => ['width' => '120'],
             ],
         ],
     ]); ?>

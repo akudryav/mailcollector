@@ -7,7 +7,7 @@ use yii\widgets\DetailView;
 /* @var $model app\models\Server */
 
 $this->title = $model->host;
-$this->params['breadcrumbs'][] = ['label' => 'Все Серверы', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Все Провайдеры', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="server-view">

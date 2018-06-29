@@ -34,7 +34,10 @@ $this->params['breadcrumbs'][] = $this->title;
             'buyer',
             'phone',
             'vertical.name',
-            'is_deleted',
+            [
+                'attribute'=>'is_deleted',
+                'value' => app\components\MailHelper::yesOrNo($model->is_deleted),
+            ],
             'check_time:datetime',
         ],
     ]) ?>

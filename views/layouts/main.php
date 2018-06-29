@@ -41,7 +41,7 @@ AppAsset::register($this);
         ['label' => 'О системе', 'url' => ['site/about']],
         ['label' => 'Настройки', 'url' => '#', 'items' => [
             ['label' => 'Вертикали', 'url' => ['vertical/index']],
-            ['label' => 'Почтовые сервера', 'url' => ['server/index']],
+            ['label' => 'Почтовые провайдеры', 'url' => ['server/index']],
             ['label' => 'Токены', 'url' => ['token/index']],
         ]],
     ];

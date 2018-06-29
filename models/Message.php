@@ -182,4 +182,16 @@ class Message extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Mailbox::className(), ['id' => 'mailbox_id']);
     }
+
+    public function getServer()
+    {
+        return $this->hasOne(Server::className(), ['id' => 'server_id'])
+            ->via('mailbox');
+    }
+
+    public function getVertical()
+    {
+        return $this->hasOne(Vertical::className(), ['id' => 'vertical_id'])
+            ->via('mailbox');
+    }
 }

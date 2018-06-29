@@ -6,8 +6,8 @@ use yii\helpers\Html;
 /* @var $this yii\web\View */
 /* @var $model app\models\Server */
 
-$this->title = 'Добавить Сервер';
-$this->params['breadcrumbs'][] = ['label' => 'Все Серверы', 'url' => ['index']];
+$this->title = 'Добавить Провайдера';
+$this->params['breadcrumbs'][] = ['label' => 'Все Провайдеры', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="server-create">
