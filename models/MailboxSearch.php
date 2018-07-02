@@ -18,7 +18,7 @@ class MailboxSearch extends Mailbox
 
     public function search($params)
     {
-        $query = Mailbox::find();
+        $query = Mailbox::find()->where(['user_id' => Yii::$app->user->identity->id]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

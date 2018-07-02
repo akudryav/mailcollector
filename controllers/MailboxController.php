@@ -135,7 +135,7 @@ class MailboxController extends AdminController
                         $boxmodel=new Mailbox();
                         $boxmodel->email=$data[0];
                         $is_new = true;
-                    } 
+                    }
                    
                     $boxmodel->password=$data[1];
                     $boxmodel->buyer = isset($data[2]) ? $data[2] : null;
@@ -238,7 +238,7 @@ class MailboxController extends AdminController
      */
     protected function findModel($id)
     {
-        if (($model = Mailbox::findOne($id)) !== null) {
+        if (($model = Mailbox::findOne(['id' => $id, 'user_id' => Yii::$app->user->identity->id])) !== null) {
             return $model;
         }
 

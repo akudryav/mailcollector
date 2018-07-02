@@ -38,6 +38,7 @@ class Mailbox extends \yii\db\ActiveRecord
             [['email'], 'unique'],
             ['server_id', 'exist', 'targetClass' => Server::className(), 'targetAttribute' => 'id'],
             ['vertical_id', 'filter', 'filter' => [Vertical::className(), 'processVertical']],
+            ['user_id', 'exist', 'targetClass' => User::className(), 'targetAttribute' =>  'id'],
         ];
     }
 
@@ -64,11 +65,13 @@ class Mailbox extends \yii\db\ActiveRecord
         if (!parent::beforeSave($insert)) {
             return false;
         }
-
         $this->server_id = Server::findIdByMail($this->email);
         if(!$this->server_id) {
             $this->addError('email', 'Не найден почтовый провайдер для '.$this->email);
             return false;
+        }
+        if ($insert) {
+            $this->user_id = Yii::$app->user->identity->id;
         }
         return true;
     }

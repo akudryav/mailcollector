@@ -11,6 +11,7 @@ use yii\widgets\Breadcrumbs;
 use app\assets\AppAsset;
 
 AppAsset::register($this);
+$is_guest = Yii::$app->user->isGuest;
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -35,20 +36,35 @@ AppAsset::register($this);
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
-    $items = [
-        ['label' => 'Письма', 'url' => ['message/index']],
-        ['label' => 'Почтовые Аккунты', 'url' => ['mailbox/index']],
+
+    $menuItems = [
+        ['label' => 'Письма', 'url' => ['message/index'], 'visible' =>!$is_guest],
+        ['label' => 'Почтовые Аккунты', 'url' => ['mailbox/index'], 'visible' =>!$is_guest],
         ['label' => 'О системе', 'url' => ['site/about']],
         ['label' => 'Настройки', 'url' => '#', 'items' => [
             ['label' => 'Вертикали', 'url' => ['vertical/index']],
             ['label' => 'Почтовые провайдеры', 'url' => ['server/index']],
             ['label' => 'Токены', 'url' => ['token/index']],
-        ]],
+        ], 'visible' =>!$is_guest],
     ];
+
+    if ($is_guest) {
+        $menuItems[] = ['label' => 'Регистрация', 'url' => ['/site/signup']];
+        $menuItems[] = ['label' => 'Войти', 'url' => ['/site/login']];
+    } else {
+        $menuItems[] = '<li>'
+            . Html::beginForm(['/site/logout'], 'post')
+            . Html::submitButton(
+                'Выйти (' . Yii::$app->user->identity->username . ')',
+                ['class' => 'btn btn-link logout']
+            )
+            . Html::endForm()
+            . '</li>';
+    }
 
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],     
-        'items' => $items,
+        'items' => $menuItems,
     ]);
     NavBar::end();
     ?>

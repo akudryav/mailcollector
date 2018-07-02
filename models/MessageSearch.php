@@ -22,7 +22,8 @@ class MessageSearch extends Message
 
     public function search($params)
     {
-        $query = Message::find()->joinWith('mailbox')->joinWith('server')->joinWith('vertical');
+        $query = Message::find()->joinWith('mailbox')->joinWith('server')->joinWith('vertical')
+            ->where(['mailbox.user_id' => Yii::$app->user->identity->id]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
