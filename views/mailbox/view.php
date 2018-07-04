@@ -31,6 +31,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             'email:email',
             'password',
+            'backup_email:email',
             'buyer',
             'phone',
             'vertical.name',

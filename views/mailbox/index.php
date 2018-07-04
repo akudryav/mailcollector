@@ -28,6 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             'id',
             'email:email',
+            'backup_email:email',
             'buyer',
             'phone',
             [

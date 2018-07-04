@@ -23,9 +23,11 @@ $listdata=Vertical::find()
 
     <?= $form->field($model, 'password')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'buyer')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'backup_email')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'phone')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'phone')->textInput() ?>
+    
+    <?= $form->field($model, 'buyer')->textInput(['maxlength' => true]) ?>
     
     <?= $form->field($model, 'vertical_id')->widget(
     AutoComplete::className(), [            

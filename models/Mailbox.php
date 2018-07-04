@@ -33,9 +33,10 @@ class Mailbox extends \yii\db\ActiveRecord
         return [
             [['email', 'password'], 'required'],
             [['is_deleted', 'check_time'], 'integer'],
-            [['email', 'password', 'buyer', 'phone'], 'string', 'max' => 255],
+            [['email', 'password', 'buyer', 'backup_email'], 'string', 'max' => 255],
             ['is_deleted', 'default', 'value' => 0],
             [['email'], 'unique'],
+            ['phone', 'string', 'length' => [4, 20]],
             ['server_id', 'exist', 'targetClass' => Server::className(), 'targetAttribute' => 'id'],
             ['vertical_id', 'filter', 'filter' => [Vertical::className(), 'processVertical']],
             ['user_id', 'exist', 'targetClass' => User::className(), 'targetAttribute' =>  'id'],
@@ -50,6 +51,7 @@ class Mailbox extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'email' => 'Email',
+            'backup_email' => 'Резервный Email',
             'password' => 'Пароль',
             'server_id' => 'Почтовый провайдер',
             'buyer' => 'Buyer name', 

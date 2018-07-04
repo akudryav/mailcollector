@@ -126,22 +126,27 @@ class MailboxController extends AdminController
                 $row = 1; $inserted = 0; $updated = 0; $error = 0;
                 while (($data = fgetcsv($handle, 1000, $delimeter)) !== FALSE) {
                     $is_new = false;
-                    if (!filter_var($data[0], FILTER_VALIDATE_EMAIL)) { // пропускаем строку, если первым не email
+                    if (!filter_var($data[0], FILTER_VALIDATE_EMAIL)) { // пропускаем первую строку, если первым не email
                         continue;
                     }
                     $boxmodel = Mailbox::findByMail($data[0]);
                     // если нет создаем новую запись
                     if(null == $boxmodel){
                         $boxmodel=new Mailbox();
-                        $boxmodel->email=$data[0];
+                        $boxmodel->email=trim($data[0]);
                         $is_new = true;
                     }
                    
-                    $boxmodel->password=$data[1];
-                    $boxmodel->buyer = isset($data[2]) ? $data[2] : null;
-                    $boxmodel->phone = isset($data[3]) ? $data[3] : null;
+                    $boxmodel->password=trim($data[1]);
+                    $boxmodel->backup_email = isset($data[2]) ? trim($data[2]) : null;              
+                    $boxmodel->phone = isset($data[3]) ? trim($data[3]) : null;
+                    $boxmodel->buyer = isset($data[4]) ? trim($data[4]) : null;
                     // при указании вертикали
-                    $boxmodel->vertical_id = Yii::$app->request->post('CsvUploadForm')['vertical'];
+                    if(isset($data[5])) {
+                        $boxmodel->vertical_id = trim($data[5]);
+                    } else {
+                        $boxmodel->vertical_id = trim(Yii::$app->request->post('CsvUploadForm')['vertical']);
+                    }
                     
                     if(!$boxmodel->save()){
                         Yii::$app->getSession()->setFlash('warning', 'Строка '.$row. Html::errorSummary($boxmodel));
