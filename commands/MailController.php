@@ -8,6 +8,7 @@ use app\components\GmailConnection;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use app\models\Mailbox;
+use app\models\User;
 
 /**
  *предполагается, что данный скрипт будет запускаться планировщиком
@@ -149,5 +150,57 @@ class MailController extends Controller
         $this->releaseLock($fp);
         return ExitCode::OK;
     }
+
+    public function actionAddAdmin() {
+        echo 'Добавление нового пользователя-админа.'.PHP_EOL;
+        $stdin = fopen('php://stdin', 'r');
+        $yes = false;
+        // вводим логин
+        while (!$yes) {
+            echo 'Введите логин:'.PHP_EOL;
+            $login = trim(fgets($stdin));
+
+            $model = User::find()->where(['username' => $login])->one();
+            if (empty($model)) {
+                $yes = true;
+            } else {
+                echo 'Этот логин занят!';
+            }
+        }
+        // вводим email
+        $yes = false;
+        while (!$yes) {
+            echo 'Введите email:'.PHP_EOL;
+            $email = trim(fgets($stdin));
+            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $model = User::find()->where(['email' => $email])->one();
+                if (empty($model)) {
+                    $yes = true;
+                } else {
+                    echo 'Этот email занят!';
+                }
+            } else {
+                echo "E-mail адрес '$email' некорректный.\n";
+            }
+
+        }
+        // Вводим пароль
+        echo 'Введите пароль:'.PHP_EOL;
+        $password = trim(fgets($stdin));
+
+        $user = new User();
+        $user->username = $login;
+        $user->email = $email;
+        $user->status = User::STATUS_ADMIN;
+        $user->setPassword($password);
+        $user->generateAuthKey();
+        if ($user->save()) {
+            echo 'Новый админ '.$login.' добавлен!';
+        } else {
+            var_dump($user->errors);
+        }
+
+    }
+
 
 }

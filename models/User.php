@@ -25,6 +25,7 @@ class User extends ActiveRecord implements IdentityInterface
 {
     const STATUS_DELETED = 0;
     const STATUS_ACTIVE = 10;
+    const STATUS_ADMIN = 20;
 
 
     /**
@@ -52,7 +53,7 @@ class User extends ActiveRecord implements IdentityInterface
     {
         return [
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
-            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED]],
+            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED, self::STATUS_ADMIN]],
         ];
     }
 
@@ -74,7 +75,8 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public static function findIdentity($id)
     {
-        return static::findOne(['id' => $id, 'status' => self::STATUS_ACTIVE]);
+        return static::find()->where(['id' => $id])
+            ->andWhere(['<>','status', self::STATUS_DELETED])->one();
     }
 
     /**
@@ -93,7 +95,8 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public static function findByUsername($username)
     {
-        return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
+        return static::find()->where(['username' => $username])
+            ->andWhere(['<>','status', self::STATUS_DELETED])->one();
     }
 
     /**
@@ -108,10 +111,8 @@ class User extends ActiveRecord implements IdentityInterface
             return null;
         }
 
-        return static::findOne([
-            'password_reset_token' => $token,
-            'status' => self::STATUS_ACTIVE,
-        ]);
+        return static::find()->where(['password_reset_token' => $token])
+            ->andWhere(['<>','status', self::STATUS_DELETED])->one();
     }
 
     /**
@@ -129,6 +130,11 @@ class User extends ActiveRecord implements IdentityInterface
         $timestamp = (int) substr($token, strrpos($token, '_') + 1);
         $expire = Yii::$app->params['user.passwordResetTokenExpire'];
         return $timestamp + $expire >= time();
+    }
+
+    public function isAdmin()
+    {
+        return $this->status == self::STATUS_ADMIN;
     }
 
     /**
