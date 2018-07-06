@@ -91,7 +91,9 @@ class MailController extends Controller
             
             if (!$mail || !$mail->checkConnection()) {
                 //пишем влог сообщение о неудачной попытке подключения
-                Yii::error('Error opening Connection. ' . $mail->getLastError(), 'mailer');
+                $err = $mail->getLastError();
+                echo $err;
+                Yii::error('Error opening Connection. ' . $err, 'mailer');
                 continue;//переходим к следующему ящику
             }
             // получаем из папки INBOX по умолчанию

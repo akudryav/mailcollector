@@ -8,7 +8,8 @@ use app\models\MessageIMAP;
 class ImapConnection extends \yii\base\Component {
     private $account;
     private $config;
-    private $imapStream;
+    private $imapStream = null;
+    private $errors = [];
     // сеттеры
     public function setAccount($value)
     {
@@ -38,11 +39,7 @@ class ImapConnection extends \yii\base\Component {
      */
     public function getImapStream()
     {
-        if($this->imapStream && (!is_resource($this->imapStream) || !imap_ping($this->imapStream))) {
-            $this->disconnect();
-            $this->imapStream = null;
-        }
-        if(!$this->imapStream) {
+        if(!$this->imapStream || !is_resource($this->imapStream)) {
             $this->imapStream = $this->initImapStream();
         }
         return $this->imapStream;
@@ -50,11 +47,11 @@ class ImapConnection extends \yii\base\Component {
 
     private function initImapStream()
     {
-        $imapStream = @imap_open($this->config['imapPath'], $this->config['imapLogin'], $this->config['imapPassword']);
-        if(!$imapStream) {
-            echo 'Connection error: ' . imap_last_error();
-        }
-        return $imapStream;
+
+        $imap = @imap_open($this->config['imapPath'], $this->config['imapLogin'], $this->config['imapPassword']);
+        $this->errors = imap_errors();
+
+        return $imap;
     }
 
     public function disconnect()
@@ -67,7 +64,9 @@ class ImapConnection extends \yii\base\Component {
 
     public function checkConnection()
     {
-        return imap_ping($this->getImapStream());
+        $imap = $this->getImapStream();
+        if(!is_resource($imap)) return false;
+        return imap_ping($imap);
     }
 
     public function getMessages($range)
@@ -84,7 +83,7 @@ class ImapConnection extends \yii\base\Component {
 
     public function getLastError()
     {
-        return imap_last_error();
+        return implode(',', $this->errors);
     }
 
     public function openSpam()
