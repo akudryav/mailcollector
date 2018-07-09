@@ -124,8 +124,8 @@ class GmailConnection extends \yii\base\Component {
                     Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
                 }
 
-                Yii::info("loading message $full_id", 'mailer');
-                echo "loading message $full_id" . PHP_EOL;
+                Yii::info("loading message $label: $full_id", 'mailer');
+                echo "loading message $label: $full_id" . PHP_EOL;
                 $model->setMbox($this->getService());
                 // загрузка данных
                 $model->loadData();

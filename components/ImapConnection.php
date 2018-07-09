@@ -121,8 +121,8 @@ class ImapConnection extends \yii\base\Component {
                     Yii::error('Error save message. ' . Html::errorSummary($model), 'mailer');
                 }
 
-                Yii::info("loading message $message_uid", 'mailer');
-                echo "loading message $message_uid" . PHP_EOL;
+                Yii::info("loading message $label: $message_uid", 'mailer');
+                echo "loading message $label: $message_uid" . PHP_EOL;
                 $model->setMbox($this->getImapStream());
                 // загрузка данных
                 $model->loadData();

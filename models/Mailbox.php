@@ -135,7 +135,7 @@ class Mailbox extends \yii\db\ActiveRecord
 
     public function getMaxUid($label = 'inbox')
     {
-        return Message::find()->where(['label' => $label])->max('uid');
+        return $this->getMessages()->where(['label' => $label])->max('uid');
     }
 
     public function tokenUrl($url)
