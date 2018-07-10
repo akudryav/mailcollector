@@ -2,8 +2,6 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
-use yii\bootstrap\Modal;
-use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ActiveDataProvider */
@@ -47,22 +45,11 @@ $this->params['breadcrumbs'][] = $this->title;
                 'buttons'=>
                     [
                         'credential' => function ($url, $model, $key) {
-                            return $model->tokenUrl($url);
+                            return $model->tokenUrl();
                         }
                     ],
             ]
         ],
     ]); ?>
-<?php
-    Modal::begin([
-        'header' => '<h2>Укажите json файл креденшиалс</h2>',
-        'id'=>'myModal'
-    ]);
-    $form = ActiveForm::begin(['id' => 'credential-form', 'options' => ['enctype' => 'multipart/form-data']]);
-    echo $form->field($json, 'secret_file')->fileInput();
 
-    ActiveForm::end();
-
-    Modal::end();
-?>
 </div>

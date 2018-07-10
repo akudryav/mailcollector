@@ -138,27 +138,15 @@ class Mailbox extends \yii\db\ActiveRecord
         return $this->getMessages()->where(['label' => $label])->max('uid');
     }
 
-    public function tokenUrl($url)
+    public function tokenUrl()
     {
         if($this->server->host != 'gmail.com') return false;
         $token = Token::findOne(['mailbox_id' => $this->id]);
-        if ($token == null || !is_file(Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->secret_file)) {
-            return Html::a('<span class="glyphicon glyphicon-upload"></span>', $url, [
-                'title' => 'Загрузить креденшиалс',
-                'class' => 'text-danger', 
-                'data-pjax' => '0',
-                'data-target'=>'#myModal',
-                'data-toggle'=>'modal'
-                ]);
-        }
-        if(empty($token->access_token)) {
+        if($token == null || empty($token->access_token)) {
             return Html::a('<span class="glyphicon glyphicon-text-width"></span>', ['mailbox/token', 'id' => $this->id], [
                 'title' => 'Получить токен',
                 'class' => 'text-warning', 
                 ]);
         }
-        return Html::a('<span class="glyphicon glyphicon-edit"></span>', ['token/update', 'id' => $token->id], [
-            'title' => 'Редактировать креденшиалс',
-        ]);
     }
 }

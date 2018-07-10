@@ -17,6 +17,7 @@ use google\apiclient;
  */
 class Token extends \yii\db\ActiveRecord
 {
+    const APP_JSON_FILE = 'client_secret_SA.json';
     /**
      * {@inheritdoc}
      */
@@ -74,11 +75,11 @@ class Token extends \yii\db\ActiveRecord
     /**
      * Получение клиента ГУГЛ АПИ
      */
-    public function getClient()
+    public static function getClient()
     {
-        $json = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $this->secret_file;
+        $json = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . self::APP_JSON_FILE;
         $client = new \Google_Client();
-        $client->setApplicationName('Gmail API PHP Quickstart');
+        $client->setApplicationName('Spam Analytics');
         $client->setScopes(\Google_Service_Gmail::GMAIL_READONLY);
         $client->setAuthConfig($json);
         $client->setAccessType('offline');

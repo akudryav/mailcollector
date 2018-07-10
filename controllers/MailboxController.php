@@ -38,79 +38,40 @@ class MailboxController extends AdminController
         ]);
     }
 
+    public function actionCallback($code)
+    {
+        if (!Yii::$app->session->has('mailbox_id')) return false;
+
+        $token = new Token();
+        $token->mailbox_id = Yii::$app->session->get('mailbox_id');
+
+        $client = Token::getClient();
+        $accessToken = $client->fetchAccessTokenWithAuthCode($code);
+        $token->access_token = json_encode($accessToken);
+        if($token->save()) {
+            Yii::$app->getSession()->setFlash('info', 'Oauth Токен создан');
+        }
+        return $this->redirect(['index']);
+    }
+
     public function actionToken($id)
     {
-        $accessToken = false;
         $data = [];
-        $request = Yii::$app->request;
-        $cred = Token::findOne(['mailbox_id' => $id]);
+        $client = Token::getClient();
 
-        $client = $cred->getClient();
+        // Request authorization from the user.
 
-
-        // если получаем через форму
-        if ($request->isPost) {
-            $authCode = $request->post('authCode');
-            // Exchange authorization code for an access token.
-            $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
-            $cred->access_token = json_encode($accessToken);
-            if($cred->save()) {
-                Yii::$app->getSession()->setFlash('info', 'Oauth Токен создан');
-            }
-        } else {
-            if (!empty($cred->access_token)) {
-                $accessToken = json_decode($cred->access_token, true);
-            } else {
-                // Request authorization from the user.
-                try {
-                    $data['authUrl'] = $client->createAuthUrl();
-                } catch (\InvalidArgumentException $e) {
-                    $data['wrongCred'] = true;
-                    $data['id'] = $cred->id;
-                }
-            }
-        }
-                
-        if($accessToken) {
-            $client->setAccessToken($accessToken);
-            // Refresh the token if it's expired.
-            if ($client->isAccessTokenExpired()) {
-                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-                $cred->access_token = json_encode($client->getAccessToken());
-                $cred->save();
-                Yii::$app->getSession()->setFlash('info', 'Oauth Токен обновлен');
-            }
-        }
+            Yii::$app->session->set('mailbox_id', $id);
+            $url = Yii::$app->urlManager->createAbsoluteUrl('mailbox/callback');
+            $client->setRedirectUri($url);
+            $data['authUrl'] = $client->createAuthUrl();
+//        } catch (\InvalidArgumentException $e) {
+//            $data['wrongCred'] = true;
+//        }
         
         return $this->render('token', $data);
     }
-    /**
-     * Загрузка json
-     */
-    public function actionCredential($id)
-    {
-        $token = Token::findOne(['mailbox_id' => $id]);
-        if ($token == null) {
-            $token = new Token();
-            $token->mailbox_id = $id;
-        } else {
-            $oldfile = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $token->secret_file;
-        }
 
-        if (Yii::$app->request->isPost) {
-            // загружаем файл
-            $token->secret_file = UploadedFile::getInstance($token, 'secret_file');
-            if ($token->upload()) {
-                Yii::$app->getSession()->setFlash('info', 'Загружен '.$token->secret_file->name);
-                if($token->save() && isset($oldfile) && basename($oldfile) != $token->secret_file  && is_file($oldfile)) {
-                    // удаляем старый файл
-                    unlink($oldfile);
-                }
-            }
-        }
-
-        return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
-    }
     /**
     * Загрузка данных из  csv
     */
