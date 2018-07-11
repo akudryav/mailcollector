@@ -41,10 +41,10 @@ $this->params['breadcrumbs'][] = $this->title;
                 'class' => 'yii\grid\ActionColumn',
                 'header'=>'Действия',
                 'headerOptions' => ['width' => '130'],
-                'template' => '{credential} {view} {update} {delete}',
+                'template' => '{token} {view} {update} {delete}',
                 'buttons'=>
                     [
-                        'credential' => function ($url, $model, $key) {
+                        'token' => function ($url, $model, $key) {
                             return $model->tokenUrl();
                         }
                     ],

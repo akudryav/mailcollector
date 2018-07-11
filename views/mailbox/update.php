@@ -17,5 +17,11 @@ $this->params['breadcrumbs'][] = 'Update';
     <?= $this->render('_form', [
         'model' => $model,
     ]) ?>
+    
+    <?php if(empty($token)) {
+        echo Html::a('Получить токен', ['mailbox/token', 'id' => $model->id], [
+                'class' => 'btn btn-warning', 
+                ]);
+    } ?>
 
 </div>

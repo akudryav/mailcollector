@@ -41,11 +41,10 @@ class MailboxController extends AdminController
     public function actionCallback($code)
     {
         if (!Yii::$app->session->has('mailbox_id')) return false;
-
+        $client = Token::getClient();
         $token = new Token();
         $token->mailbox_id = Yii::$app->session->get('mailbox_id');
 
-        $client = Token::getClient();
         $accessToken = $client->fetchAccessTokenWithAuthCode($code);
         $token->access_token = json_encode($accessToken);
         if($token->save()) {
@@ -56,20 +55,13 @@ class MailboxController extends AdminController
 
     public function actionToken($id)
     {
-        $data = [];
         $client = Token::getClient();
-
         // Request authorization from the user.
-
-            Yii::$app->session->set('mailbox_id', $id);
-            $url = Yii::$app->urlManager->createAbsoluteUrl('mailbox/callback');
-            $client->setRedirectUri($url);
-            $data['authUrl'] = $client->createAuthUrl();
-//        } catch (\InvalidArgumentException $e) {
-//            $data['wrongCred'] = true;
-//        }
-        
-        return $this->render('token', $data);
+        Yii::$app->session->set('mailbox_id', $id);
+        $url = Yii::$app->urlManager->createAbsoluteUrl('mailbox/callback');
+        $client->setRedirectUri($url);
+        // переходим по ссылке авторизации
+        return $this->redirect($client->createAuthUrl());
     }
 
     /**
@@ -178,6 +170,7 @@ class MailboxController extends AdminController
 
         return $this->render('update', [
             'model' => $model,
+            'token' => Token::findOne(['mailbox_id' => $model->id]),
         ]);
     }
 
