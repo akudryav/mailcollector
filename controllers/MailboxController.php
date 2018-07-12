@@ -42,13 +42,19 @@ class MailboxController extends AdminController
     {
         if (!Yii::$app->session->has('mailbox_id')) return false;
         $client = Token::getClient();
+        $url = Yii::$app->urlManager->createAbsoluteUrl('mailbox/callback');
+        $client->setRedirectUri($url);
+        // создаем токен
         $token = new Token();
         $token->mailbox_id = Yii::$app->session->get('mailbox_id');
-
         $accessToken = $client->fetchAccessTokenWithAuthCode($code);
-        $token->access_token = json_encode($accessToken);
-        if($token->save()) {
-            Yii::$app->getSession()->setFlash('info', 'Oauth Токен создан');
+        if (isset($accessToken->error)){
+            Yii::$app->getSession()->setFlash('error', 'Ошибка получения токена: '.$accessToken->error_description);
+        } else {
+            $token->access_token = json_encode($accessToken);
+            if($token->save()) {
+                Yii::$app->getSession()->setFlash('success', 'Oauth Токен создан');
+            }
         }
         return $this->redirect(['index']);
     }
@@ -56,10 +62,10 @@ class MailboxController extends AdminController
     public function actionToken($id)
     {
         $client = Token::getClient();
-        // Request authorization from the user.
-        Yii::$app->session->set('mailbox_id', $id);
         $url = Yii::$app->urlManager->createAbsoluteUrl('mailbox/callback');
         $client->setRedirectUri($url);
+        // Добавляем в сессию переменную id аккаунта.
+        Yii::$app->session->set('mailbox_id', $id);
         // переходим по ссылке авторизации
         return $this->redirect($client->createAuthUrl());
     }

@@ -120,3 +120,7 @@ td .glyphicon {
     margin: 0 3px;
 }
 .danger { color: #f00; }
+
+summary {
+    display: list-item;
+}
