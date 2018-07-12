@@ -30,7 +30,7 @@ use LanguageDetection\Language;
  */
 class Message extends \yii\db\ActiveRecord
 {
-    const LANG_LIST = ['de', 'en', 'fr', 'ru', 'it', 'es', 'nl'];
+    const LANG_LIST = ['de', 'en', 'fr', 'uk', 'ru', 'it', 'es', 'nl'];
 
     /**
      * {@inheritdoc}

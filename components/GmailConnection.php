@@ -31,7 +31,7 @@ class GmailConnection extends \yii\base\Component {
             echo 'Необходимо создать Oauth токен для аккаунта '.$this->account->email.PHP_EOL;
             return false;
         }
-        $this->client = $this->credential->getClient();
+        $this->client = Token::getClient();
         $accessToken = json_decode($this->credential->access_token, true);
         $this->client->setAccessToken($accessToken);
         $this->refreshToken();

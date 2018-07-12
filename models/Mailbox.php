@@ -54,7 +54,7 @@ class Mailbox extends \yii\db\ActiveRecord
             'backup_email' => 'Резервный Email',
             'password' => 'Пароль',
             'server_id' => 'Почтовый провайдер',
-            'buyer' => 'Buyer name', 
+            'buyer' => 'Покупатель', 
             'phone' => 'Телефон для подтверждений',
             'is_deleted' => 'Аккаунт блокирован',
             'vertical_id' => 'Вертикаль',

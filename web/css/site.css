@@ -123,4 +123,5 @@ td .glyphicon {
 
 summary {
     display: list-item;
+    font-weight: 600;
 }
