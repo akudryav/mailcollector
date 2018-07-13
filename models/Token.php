@@ -83,6 +83,7 @@ class Token extends \yii\db\ActiveRecord
         $client->setScopes(\Google_Service_Gmail::GMAIL_READONLY);
         $client->setAuthConfig($json);
         $client->setAccessType('offline');
+        $client->setApprovalPrompt('force');
         return $client;
     }
     
