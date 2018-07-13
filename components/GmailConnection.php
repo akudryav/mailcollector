@@ -47,12 +47,20 @@ class GmailConnection extends \yii\base\Component {
     {
         // Refresh the token if it's expired.
         if ($this->client->isAccessTokenExpired()) {
-            $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
-            $this->credential->access_token = json_encode($this->client->getAccessToken());
+            // save refresh token to some variable
+            $refreshTokenSaved = $this->client->getRefreshToken();
+            $this->client->fetchAccessTokenWithRefreshToken($refreshTokenSaved);
+            // pass access token to some variable
+            $accessTokenUpdated = $this->client->getAccessToken();
+            // append refresh token
+            $accessTokenUpdated['refresh_token'] = $refreshTokenSaved;
+            
+            $this->credential->access_token = json_encode($accessTokenUpdated);
             $this->credential->save();
+            $this->client->setAccessToken($refreshTokenSaved);
         }
     }
-    
+
     public function disconnect()
     {
     }
