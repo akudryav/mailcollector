@@ -57,7 +57,6 @@ class GmailConnection extends \yii\base\Component {
             
             $this->credential->access_token = json_encode($accessTokenUpdated);
             $this->credential->save();
-            $this->client->setAccessToken($refreshTokenSaved);
         }
     }
 
