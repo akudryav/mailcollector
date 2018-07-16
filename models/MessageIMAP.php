@@ -39,7 +39,7 @@ class MessageIMAP extends Message
         //получение заголовка письма в виде объекта
         $header = imap_rfc822_parse_headers($this->header);
         // хост отправителя
-        $this->from_domain = $header->sender[0]->host;
+        $this->from_domain = self::getField($header->from[0], 'host');
         $this->subject = self::getDecodedHeader(self::getField($header, 'subject'));
         $this->message_date = MailHelper::strToMysqlDate(self::getField($header, 'date'));
         $this->body_text = $this->getTextBody();
