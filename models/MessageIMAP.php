@@ -125,6 +125,10 @@ class MessageIMAP extends Message
                         $text = imap_qprint($text);
                         break;
                 }
+                // для "порченой" кодировки проверяем наличие QUOTED-PRINTABLE
+                if (substr_count( $text, '=20') > 5) {
+                    $text = imap_qprint($text);
+                }
                 // меняем кодировку на utf-8
                 if($charset && ($mimetype == 'TEXT/PLAIN' || $mimetype == 'TEXT/HTML')){
                     $text = iconv($charset, 'UTF-8', $text);
