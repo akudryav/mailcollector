@@ -85,7 +85,15 @@ class MessageController extends AdminController
      */
     protected function findModel($id)
     {
-        if (($model = Message::findOne($id)) !== null) {
+        $query = Message::find()->joinWith('mailbox')->where(['message.id' => $id]);
+
+        if(!Yii::$app->user->identity->isAdmin()) {
+            $query->andWhere(['mailbox.user_id' => Yii::$app->user->identity->id]);
+        }
+
+        $model = $query->one();
+
+        if ($model !== null) {
             return $model;
         }
 

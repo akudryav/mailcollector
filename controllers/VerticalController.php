@@ -35,8 +35,10 @@ class VerticalController extends AdminController
      */
     public function actionIndex()
     {
+        $query = Vertical::userList();
+
         $dataProvider = new ActiveDataProvider([
-            'query' => Vertical::find(),
+            'query' => $query,
         ]);
 
         return $this->render('index', [
@@ -118,7 +120,11 @@ class VerticalController extends AdminController
      */
     protected function findModel($id)
     {
-        if (($model = Vertical::findOne($id)) !== null) {
+        $query = Vertical::userList()->andWhere(['vertical.id' => $id]);
+
+        $model = $query->one();
+
+        if ($model !== null) {
             return $model;
         }
 

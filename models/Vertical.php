@@ -42,6 +42,27 @@ class Vertical extends \yii\db\ActiveRecord
             'name' => 'Вертикаль',
         ];
     }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getMailboxes()
+    {
+        return $this->hasMany(Mailbox::className(), ['vertical_id' => 'id']);
+    }
+
+    public static function userList()
+    {
+        $query = Vertical::find()->select('vertical.*');
+
+        if(!Yii::$app->user->identity->isAdmin()) {
+            $query->joinWith('mailboxes')
+                ->addSelect('COUNT(mailbox.id) AS boxCount')
+                ->where(['mailbox.user_id' => Yii::$app->user->identity->id])
+                ->groupBy('vertical.id');
+        }
+        return $query;
+    }
     
     public static function processVertical($vertical = null)
     {

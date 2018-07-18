@@ -203,7 +203,15 @@ class MailboxController extends AdminController
      */
     protected function findModel($id)
     {
-        if (($model = Mailbox::findOne(['id' => $id, 'user_id' => Yii::$app->user->identity->id])) !== null) {
+        $query = Mailbox::find()->where(['id' => $id]);
+
+        if(!Yii::$app->user->identity->isAdmin()) {
+            $query->andWhere(['user_id' => Yii::$app->user->identity->id]);
+        }
+
+        $model = $query->one();
+
+        if ($model !== null) {
             return $model;
         }
 

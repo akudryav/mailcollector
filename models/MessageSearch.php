@@ -16,7 +16,7 @@ class MessageSearch extends Message
         // только поля определенные в rules() будут доступны для поиска
         return [
             [['id', 'attachment_count'], 'integer'],
-            [['email', 'label', 'language', 'mailer', 'ip_type', 'subject', 'server', 'vertical'], 'safe'],
+            [['email', 'label', 'language', 'mailer', 'ip_type', 'subject', 'server', 'vertical', 'from_domain'], 'safe'],
         ];
     }
 
@@ -48,6 +48,7 @@ class MessageSearch extends Message
             ->andFilterWhere(['server.id' => $this->server]);
         $query->andFilterWhere(['like', 'mailbox.email', $this->email])
             ->andFilterWhere(['like', 'mailer', $this->mailer])
+            ->andFilterWhere(['like', 'from_domain', $this->from_domain])
             ->andFilterWhere(['like', 'subject', $this->subject]);
 
         return $dataProvider;

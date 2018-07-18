@@ -21,8 +21,14 @@ class TokenController extends AdminController
      */
     public function actionIndex()
     {
+        $query = Token::find();
+
+        if(!Yii::$app->user->identity->isAdmin()) {
+            $query->joinWith('mailbox')->where(['mailbox.user_id' => Yii::$app->user->identity->id]);
+        }
+
         $dataProvider = new ActiveDataProvider([
-            'query' => Token::find(),
+            'query' => $query,
         ]);
 
         return $this->render('index', [
@@ -40,65 +46,6 @@ class TokenController extends AdminController
     {
         return $this->render('view', [
             'model' => $this->findModel($id),
-        ]);
-    }
-
-    /**
-     * Creates a new Token model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return mixed
-     */
-    public function actionCreate()
-    {
-        $model = new Token();
-
-        if (Yii::$app->request->isPost) {
-            $model->load(Yii::$app->request->post());
-            $model->secret_file = UploadedFile::getInstance($model, 'secret_file');
-
-            if ($model->upload() && $model->save()) {
-                Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
-        }
-
-        return $this->render('create', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Updates an existing Token model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-        $request = Yii::$app->request;
-
-        if ($request->isPost) {
-            $oldfile = Yii::getAlias('@attachments') . DIRECTORY_SEPARATOR . $model->secret_file;
-            $newfile = UploadedFile::getInstance($model, 'secret_file');
-            if(!empty($newfile)) {
-                $model->secret_file = $newfile;
-                $model->upload();
-                if(basename($oldfile) != $newfile->name  && is_file($oldfile)){
-                    // удаляем старый файл
-                    unlink($oldfile);
-                }
-            }
-
-            if ($model->save()) {
-                Yii::$app->getSession()->setFlash('success', 'Данные успешно сохранены');
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
-        }
-
-        return $this->render('update', [
-            'model' => $model,
         ]);
     }
 
@@ -125,7 +72,15 @@ class TokenController extends AdminController
      */
     protected function findModel($id)
     {
-        if (($model = Token::findOne($id)) !== null) {
+        $query = Token::find()->joinWith('mailbox')->where(['token.id' => $id]);
+
+        if(!Yii::$app->user->identity->isAdmin()) {
+            $query->andWhere(['mailbox.user_id' => Yii::$app->user->identity->id]);
+        }
+
+        $model = $query->one();
+
+        if ($model !== null) {
             return $model;
         }
 

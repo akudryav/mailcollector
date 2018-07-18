@@ -36,16 +36,15 @@ $this->params['breadcrumbs'][] = $this->title;
                 'header'=>'Вертикаль',
                 'attribute' => 'vertical',
                 'value' => 'vertical.name',
-                'filter'=>ArrayHelper::map(Vertical::find()->asArray()->all(), 'id', 'name'),
+                'filter'=>ArrayHelper::map(Vertical::userList()->asArray()->all(), 'id', 'name'),
             ],
             'label',
             'mailer',
+            'from_domain',
             'ip_type',
             'language',
             'subject',
-            //'attachment_count',
-            //'header:ntext',
-            'message_date',
+            'message_date:datetime',
 
 
             [
