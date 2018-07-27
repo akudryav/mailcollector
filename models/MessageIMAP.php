@@ -193,14 +193,12 @@ class MessageIMAP extends Message
 
         foreach($address_map as $key => $arr){
             foreach($arr as $obj){
-                $type = $key;
-                $address = "$obj->mailbox@$obj->host";//склеиваем email
                 $model = new Address();
                 $model->setAttributes([
                     'message_id' => $this->id,
-                    'type' => $type,
+                    'type' => $key,
                     'name' => self::getDecodedHeader(self::getField($obj,'personal')),
-                    'email' => $address,
+                    'email' => self::getField($obj, 'mailbox').'@'.self::getField($obj, 'host'),
                 ]);
                 if (!$model->save()) {
                     Yii::error('Error save address. ' . Html::errorSummary($model), 'mailer');
