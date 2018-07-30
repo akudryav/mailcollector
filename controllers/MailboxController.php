@@ -104,7 +104,9 @@ class MailboxController extends AdminController
                     if(isset($data[5])) {
                         $boxmodel->vertical_id = trim($data[5]);
                     } else {
-                        $boxmodel->vertical_id = trim(Yii::$app->request->post('CsvUploadForm')['vertical']);
+                        $vertical = trim(Yii::$app->request->post('CsvUploadForm')['vertical']);
+                        if (!empty($vertical))
+                            $boxmodel->vertical_id = $vertical;
                     }
                     
                     if(!$boxmodel->save()){
