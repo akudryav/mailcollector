@@ -45,6 +45,7 @@ $is_guest = Yii::$app->user->isGuest;
             ['label' => 'Вертикали', 'url' => ['vertical/index']],
             ['label' => 'Почтовые провайдеры', 'url' => ['server/index']],
             ['label' => 'Токены', 'url' => ['token/index']],
+            ['label' => 'Логи', 'url' => ['log/index']],
         ], 'visible' =>!$is_guest],
     ];
 
