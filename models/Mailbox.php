@@ -33,7 +33,7 @@ class Mailbox extends \yii\db\ActiveRecord
         return [
             [['email', 'password'], 'required'],
             [['is_deleted', 'check_time'], 'integer'],
-            [['email', 'password', 'buyer', 'backup_email'], 'string', 'max' => 255],
+            [['email', 'password', 'buyer', 'backup_email', 'vertical_id'], 'string', 'max' => 255],
             ['is_deleted', 'default', 'value' => 0],
             [['email'], 'unique'],
             ['phone', 'string', 'length' => [4, 20]],

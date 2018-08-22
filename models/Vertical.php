@@ -67,8 +67,12 @@ class Vertical extends \yii\db\ActiveRecord
     public static function processVertical($vertical = null)
     {
         if (null == $vertical) return null;
-        // целое
-        if (ctype_digit($vertical)) return (int)$vertical;
+        if (ctype_digit($vertical)) {
+            // проверка наличия тогого id
+            $model = self::findOne($vertical);
+            if (null != $model)
+                return (int)$vertical;
+        }
         // ищем по строке
         $model = self::find()->where(['name' => $vertical])->one();
         if (null != $model) return $model->id;
