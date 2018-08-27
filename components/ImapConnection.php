@@ -102,7 +102,6 @@ class ImapConnection extends \yii\base\Component {
         foreach ($this->getMessages($range) as $message) {
             //получаем UID сообщения
             $message_uid = $message->uid;
-            Yii::info("add message $message_uid", 'mailer');
 
             try {
                 //отключаем Autocommit, будем сами управлять транзакциями
