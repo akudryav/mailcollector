@@ -88,6 +88,7 @@ class MailController extends Controller
         foreach (Mailbox::getImap() as $account) {
             $mail = new ImapConnection(['account' => $account]);
             echo "Read {$account->email}".PHP_EOL;
+            Yii::info('Read: ' . $account->email, 'mailer');
             
             if (!$mail || !$mail->checkConnection()) {
                 //пишем влог сообщение о неудачной попытке подключения
@@ -130,6 +131,7 @@ class MailController extends Controller
         foreach (Mailbox::getGmail() as $account) {
             $mail = new GmailConnection(['account' => $account]);
             echo "Read {$account->email}".PHP_EOL;
+            Yii::info('Read: ' . $account->email, 'mailer');
 
             if (!$mail || !$mail->checkConnection()) {
                 //пишем влог сообщение о неудачной попытке подключения

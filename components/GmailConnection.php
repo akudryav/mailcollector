@@ -154,6 +154,7 @@ class GmailConnection extends \yii\base\Component {
             $transaction->commit();
 
         }
+        return $msg_count;
     }
 
 }
