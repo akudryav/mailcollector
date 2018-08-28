@@ -39,14 +39,14 @@ class MailController extends Controller
         $lock_path = Yii::getAlias('@runtime') . DIRECTORY_SEPARATOR . $prefix. $this->lock;
         $aborted = file_exists($lock_path) ? filemtime($lock_path) : false;
         if ($aborted) { //если выполнение предыдущего скрипта было прервано
-            Yii::info('Выполнение предыдущего скрипта было прервано', 'mailer'); //пишем в лог, что прервано
+            Yii::info('Выполнение предыдущего скрипта было прервано '.$prefix, 'mailer'); //пишем в лог, что прервано
         }
         $fp = fopen($lock_path, 'w'); //открывает файл с возможностью записи
         if (!flock($fp, LOCK_EX | LOCK_NB)) { //если не удалось наложить блокировку, то значит предыдущий скрипт еще работает.
-            Yii::info('Предыдущий скрипт еще работает', 'mailer'); //пишем в лог, что занято
+            Yii::info('Предыдущий скрипт еще работает '.$prefix, 'mailer'); //пишем в лог, что занято
             return false;
         }
-        Yii::info('Начинаем проверять почту', 'mailer');
+        Yii::info('Начинаем проверять почту '.$prefix , 'mailer');
         return $fp;
     }
 
