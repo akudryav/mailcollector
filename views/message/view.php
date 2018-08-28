@@ -50,7 +50,11 @@ $this->params['breadcrumbs'][] = $this->title;
                 'format' => 'html',
                 'value' => $model->showAttachments(),
             ],
-            'header:ntext',
+            [
+                'attribute' => 'header',
+                'format' => 'ntext',
+                'contentOptions'=>['style'=>'max-width:1000px; white-space:normal;'],
+            ],
             'message_date:datetime',
             [
                 'attribute'=>'is_ready',
