@@ -130,8 +130,8 @@ class MessageIMAP extends Message
                     $text = imap_qprint($text);
                 }
                 // меняем кодировку на utf-8
-                if($charset && ($mimetype == 'TEXT/PLAIN' || $mimetype == 'TEXT/HTML')){
-                    $text = iconv($charset, 'UTF-8', $text);
+                if($charset && strtolower ($charset) != 'utf-8' && ($mimetype == 'TEXT/PLAIN' || $mimetype == 'TEXT/HTML')){
+                    $text = iconv($charset, 'UTF-8//IGNORE', $text);
                 }
 
                 return $text;
