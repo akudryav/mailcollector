@@ -65,7 +65,7 @@ class MessageIMAP extends Message
                 $ret .= $text;
             }else{
                 //приводим всё кодировке к UTF-8
-                $ret .= iconv($charset,"UTF-8",$text);
+                $ret .= iconv($charset,"UTF-8//IGNORE",$text);
             }
         }
         return $ret;
