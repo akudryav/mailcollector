@@ -133,6 +133,8 @@ class MessageIMAP extends Message
                 if($charset && strtolower ($charset) != 'utf-8' && ($mimetype == 'TEXT/PLAIN' || $mimetype == 'TEXT/HTML')){
                     $text = iconv($charset, 'UTF-8//IGNORE', $text);
                 }
+                // заменить/удалить 4 (+) - байтовые символы из строки 
+                $text = preg_replace('/[\x{10000}-\x{10FFFF}]/u', "\xEF\xBF\xBD", $text);
 
                 return $text;
             }
