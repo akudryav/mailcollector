@@ -65,7 +65,8 @@ class MessageIMAP extends Message
                 $ret .= $text;
             }else{
                 //приводим всё кодировке к UTF-8
-                $ret .= iconv($charset,"UTF-8//IGNORE",$text);
+                // $ret .= iconv($charset,"UTF-8//IGNORE",$text);
+                $ret .=  mb_convert_encoding($text , 'UTF-8' , $charset);
             }
         }
         return $ret;
@@ -131,7 +132,8 @@ class MessageIMAP extends Message
                 }
                 // меняем кодировку на utf-8
                 if($charset && strtolower ($charset) != 'utf-8' && ($mimetype == 'TEXT/PLAIN' || $mimetype == 'TEXT/HTML')){
-                    $text = iconv($charset, 'UTF-8//IGNORE', $text);
+                    $text = mb_convert_encoding($text , 'UTF-8' , $charset);
+                    // $text = iconv($charset, 'UTF-8//IGNORE', $text);
                 }
                 // заменить/удалить 4 (+) - байтовые символы из строки 
                 $text = preg_replace('/[\x{10000}-\x{10FFFF}]/u', "\xEF\xBF\xBD", $text);
